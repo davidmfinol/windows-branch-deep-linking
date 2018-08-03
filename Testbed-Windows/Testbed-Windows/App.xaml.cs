@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using UwpTestBed;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
@@ -46,6 +47,7 @@ namespace TestbedWindows
             Type deepLinkPageType = typeof(MainPage);
             if (e.Kind == ActivationKind.Protocol) {
                 var protocolArgs = (ProtocolActivatedEventArgs)e;
+                DeepLinkHandler.OnAppDeepLink(protocolArgs.Uri.AbsoluteUri);
             }
 
             if (rootFrame.Content == null) {

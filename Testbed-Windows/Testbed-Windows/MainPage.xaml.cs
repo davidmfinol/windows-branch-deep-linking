@@ -31,18 +31,12 @@ namespace TestbedWindows
         public MainPage()
         {
             this.InitializeComponent();
+            LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs"); //temp
             Main();
         }
 
-        public void Main(bool setBranchKey = true) {
-            Task.Run(async () => {
-                Task t = Task.Run(() => {
-                    if (setBranchKey)
-                        LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs"); //temp
-                });
-                await t;
-                t.Wait(100);
-
+        public void Main() {
+            Task.Run(() => {
                 Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => {
                     List<string> lines = new List<string>();
                     lines.Add("Init session, parameters: ");

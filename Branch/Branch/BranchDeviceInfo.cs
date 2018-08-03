@@ -4,21 +4,41 @@ using Newtonsoft.Json.Linq;
 
 namespace BranchSdk {
     public static class BranchDeviceInfo {
-        public static void UpdateRequestWithUserData(JObject requestObj) {
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetOS())) requestObj.Add(BranchJsonKey.OS.GetKey(), LibraryAdapter.GetSystemObserver().GetOS());
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetOSVersion())) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), LibraryAdapter.GetSystemObserver().GetOSVersion());
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetLocalIp())) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), LibraryAdapter.GetSystemObserver().GetLocalIp());
+        private static string os;
+        private static string osVersion;
+        private static string localIp;
+        private static string devIdentity;
+        private static string hardwareId;
+        private static bool isRealHardwareId;
 
-            string devIdentity = LibraryAdapter.GetPrefHelper().GetIdentity();
-            if(!string.IsNullOrEmpty(devIdentity)) {
-                requestObj.Add(BranchJsonKey.DeveloperIdentity.GetKey(), devIdentity);
+        public static void Init() {
+            os = LibraryAdapter.GetSystemObserver().GetOS();
+            osVersion = LibraryAdapter.GetSystemObserver().GetOSVersion();
+            localIp = LibraryAdapter.GetSystemObserver().GetLocalIp();
+            devIdentity = LibraryAdapter.GetPrefHelper().GetIdentity();
+            hardwareId = LibraryAdapter.GetSystemObserver().GetUniqueID(false);
+            isRealHardwareId = LibraryAdapter.GetSystemObserver().IsRealHardwareId;
+        }
+
+        public static void UpdateRequestWithUserData(JObject requestObj) {
+            if (!string.IsNullOrEmpty(hardwareId)) {
+                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), hardwareId);
+                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), isRealHardwareId);
             }
+            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), os);
+            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), osVersion);
+            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), localIp);
+            if (!string.IsNullOrEmpty(devIdentity)) requestObj.Add(BranchJsonKey.DeveloperIdentity.GetKey(), devIdentity);
         }
 
         public static void UpdateRequestWithDeviceParams(JObject requestObj) {
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetOS())) requestObj.Add(BranchJsonKey.OS.GetKey(), LibraryAdapter.GetSystemObserver().GetOS());
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetOSVersion())) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), LibraryAdapter.GetSystemObserver().GetOSVersion());
-            if (!string.IsNullOrEmpty(LibraryAdapter.GetSystemObserver().GetLocalIp())) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), LibraryAdapter.GetSystemObserver().GetLocalIp());
+            if (!string.IsNullOrEmpty(hardwareId)) {
+                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), hardwareId);
+                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), isRealHardwareId);
+            }
+            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), os);
+            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), osVersion);
+            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), localIp);
         }
     }
 }

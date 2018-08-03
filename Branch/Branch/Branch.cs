@@ -44,7 +44,10 @@ namespace BranchSdk {
         private static Branch instance;
         public static Branch Instance {
             get {
-                if (instance == null) instance = new Branch();
+                if (instance == null) {
+                    instance = new Branch();
+                    BranchDeviceInfo.Init();
+                }
                 return instance;
             }
         }
@@ -79,6 +82,8 @@ namespace BranchSdk {
         }
 
         private SessionState initState = SessionState.Uninitialised;
+
+        public bool IsSimulatingInstalls;
 
         public void InitSession(string linkUrl = "") {
             InitUserSessionInternal(null, false, linkUrl);

@@ -1,13 +1,36 @@
-﻿using System.Linq;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Windows.Networking;
 using Windows.Networking.Connectivity;
 using Windows.System.Profile;
+using Windows.System.UserProfile;
 
 namespace BranchSdk {
     //TODO: It should be extracted into a separate uwp library
     public class BranchSystemObserver : IBranchSystemObserver {
+        private bool isRealHardwareId = true;
+
+        public bool IsRealHardwareId {
+            get {
+                return isRealHardwareId;
+            }
+        }
+
+        public string GetUniqueID(bool debug) {
+            string windowsId = null;
+            if (!debug && !Branch.I.IsSimulatingInstalls) {
+                windowsId = AdvertisingManager.AdvertisingId;
+            }
+            if (string.IsNullOrEmpty(windowsId)) {
+                windowsId = Guid.NewGuid().ToString();
+                isRealHardwareId = false;
+            }
+            return windowsId;
+        }
+
         public string GetLocalIp() {
             var icp = NetworkInformation.GetInternetConnectionProfile();
 
