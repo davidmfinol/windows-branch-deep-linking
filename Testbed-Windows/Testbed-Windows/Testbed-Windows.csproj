@@ -145,8 +145,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="branch_debug_0.0.1">
-      <HintPath>..\..\DLLs\Debug\branch_debug_0.0.1.dll</HintPath>
+    <Reference Include="branch_debug_0.0.2">
+      <HintPath>..\..\DLLs\Debug\branch_debug_0.0.2.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

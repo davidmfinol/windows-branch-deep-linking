@@ -16,6 +16,7 @@ namespace BranchSdk {
 
         public Branch.BranchInitCallbackWithDictionary dictionaryCallback;
         public Branch.BranchInitCallbackWithBUO buoCallback;
+        public Action CommonCallback;
 
         public BranchInitCallbackWrapper(Branch.BranchInitCallbackWithDictionary dictionaryCallback) {
             this.dictionaryCallback = dictionaryCallback;
@@ -28,6 +29,8 @@ namespace BranchSdk {
         }
 
         public void Invoke(JObject jsonData, string error) {
+            if (CommonCallback != null) CommonCallback.Invoke();
+
             if (type == Types.WithDictionary) {
                 string serializedJson = jsonData["data"].ToString();
                 jsonData = JObject.Parse(serializedJson.Replace(@"\", ""));
@@ -85,9 +88,18 @@ namespace BranchSdk {
 
         public bool IsSimulatingInstalls;
 
-        public void InitSession(string linkUrl = "") {
-            InitUserSessionInternal(null, false, linkUrl);
-        } 
+        public BranchInitCallbackWrapper CachedInitCallback { get; private set; }
+        public bool IsFirstSessionInited { get; private set; }
+
+        public void InitSession(string linkUrl = "", bool autoInitSession = false) {
+            if (autoInitSession) {
+                if (IsFirstSessionInited) {
+                    InitUserSessionInternal(CachedInitCallback, false, linkUrl);
+                }
+            } else {
+                InitUserSessionInternal(null, false, linkUrl);
+            }
+        }
 
         public void InitSession(bool isReferrable, string linkUrl = "") {
             InitUserSessionInternal(null, isReferrable, linkUrl);
@@ -105,8 +117,7 @@ namespace BranchSdk {
             if (HasUser() && HasSession() && initState == SessionState.Initialised) {
                 
             } else {
-                if(true) {
-                //if (isReferrable) {
+                if (isReferrable) {
                     LibraryAdapter.GetPrefHelper().SetIsReferrable();
                 } else {
                     LibraryAdapter.GetPrefHelper().ClearIsReferrable();
@@ -126,10 +137,14 @@ namespace BranchSdk {
                 Debug.WriteLine("BranchSDK", "Branch Warning: You are using your test app's Branch Key. Remember to change it to live Branch Key during deployment.");
             }
 
+            CachedInitCallback = callback;
+
             RegisterAppInit(callback, linkUrl);
         }
 
         private void RegisterAppInit(BranchInitCallbackWrapper callback, string linkUrl = "") {
+            callback.CommonCallback = () => { IsFirstSessionInited = true; };
+
             BranchServerRequest request = GetInstallOrOpenRequest(callback, linkUrl);
             BranchServerRequestQueue.AddRequest(request);
             BranchServerRequestQueue.RunQueue();

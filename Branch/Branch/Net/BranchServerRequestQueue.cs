@@ -47,6 +47,8 @@ namespace BranchSdk.Net {
                         httpResponse = await httpClient.GetAsync(requestUri);
                         httpResponseBody = await httpResponse.Content.ReadAsStringAsync();
 
+                        Debug.WriteLine("Get request: " + GetUriWithParameters(request.RequestUrl(), request.Parameters));
+
                         if (httpResponse.IsSuccessStatusCode) {
                             string responseAsText = await httpResponse.Content.ReadAsStringAsync();
                             request.OnSuccess(responseAsText);
@@ -63,6 +65,7 @@ namespace BranchSdk.Net {
                         HttpContent content = new StringContent(request.PostData.ToString(), Encoding.UTF8, "application/json");
                         HttpResponseMessage httpResponse = await httpClient.PostAsync(requestUri, content);
 
+                        Debug.WriteLine("Post request: " + request.RequestUrl());
                         Debug.WriteLine("Post data: " + request.PostData);
 
                         if (httpResponse.IsSuccessStatusCode) {

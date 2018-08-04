@@ -1,8 +1,11 @@
-﻿using System;
+﻿using BranchSdk;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using UwpTestBed;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -40,8 +43,8 @@ namespace TestbedWindows
                 // Create a Frame to act as the navigation context and navigate to the first page
                 rootFrame = new Frame();
                 rootFrame.NavigationFailed += OnNavigationFailed;
-
                 Window.Current.Content = rootFrame;
+                Window.Current.Activated += WindowsFocusChanged;
             }
 
             Type deepLinkPageType = typeof(MainPage);
@@ -57,6 +60,14 @@ namespace TestbedWindows
 
             // Ensure the current window is active
             Window.Current.Activate();
+        }
+
+        private void WindowsFocusChanged(object sender, Windows.UI.Core.WindowActivatedEventArgs e) {
+            if (e.WindowActivationState != Windows.UI.Core.CoreWindowActivationState.Deactivated) {
+                Task.Run(() => {
+                    Branch.I.InitSession(string.Empty, true);
+                });
+            }
         }
 
         /// <summary>
@@ -84,6 +95,7 @@ namespace TestbedWindows
 
                 // Place the frame in the current Window
                 Window.Current.Content = rootFrame;
+                Window.Current.Activated += WindowsFocusChanged;
             }
 
             if (e.PrelaunchActivated == false)

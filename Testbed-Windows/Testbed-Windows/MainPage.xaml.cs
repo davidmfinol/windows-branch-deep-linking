@@ -1,23 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 using BranchSdk;
 using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
-using System.Diagnostics;
 using Windows.UI.Text;
-using System.Text;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -77,39 +65,6 @@ namespace TestbedWindows
             });
         }
 
-        private void AddLog(string text) {
-            TextBox logText = new TextBox();
-            logText.FontSize = 20;
-            logText.FontWeight = FontWeights.Normal;
-            logText.TextWrapping = TextWrapping.Wrap;
-            logText.IsReadOnly = true;
-            logText.AcceptsReturn = true;
-            logText.BorderThickness = new Thickness(0);
-            logText.Margin = new Thickness(0, 3, 0, 3);
-            logText.Text = text;
-
-            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-        }
-
-        private void AddLog(List<string> lines) {
-            TextBox logText = new TextBox();
-            logText.FontSize = 20;
-            logText.FontWeight = FontWeights.Normal;
-            logText.TextWrapping = TextWrapping.Wrap;
-            logText.IsReadOnly = true;
-            logText.AcceptsReturn = true;
-            logText.BorderThickness = new Thickness(0);
-            logText.Margin = new Thickness(0, 3, 0, 3);
-
-            int i = 0;
-            foreach(string line in lines) {
-                logText.Text += line + (i < lines.Count - 1 ? Environment.NewLine : string.Empty);
-                i++;
-            }
-
-            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-        }
-
         private void OnGetShortLinkClicked(object sender, RoutedEventArgs e) {
             Task.Run(() => {
                 BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
@@ -160,6 +115,39 @@ namespace TestbedWindows
                     });
                 });
             });
+        }
+
+        private void AddLog(string text) {
+            TextBox logText = new TextBox();
+            logText.FontSize = 20;
+            logText.FontWeight = FontWeights.Normal;
+            logText.TextWrapping = TextWrapping.Wrap;
+            logText.IsReadOnly = true;
+            logText.AcceptsReturn = true;
+            logText.BorderThickness = new Thickness(0);
+            logText.Margin = new Thickness(0, 3, 0, 3);
+            logText.Text = text;
+
+            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
+        }
+
+        private void AddLog(List<string> lines) {
+            TextBox logText = new TextBox();
+            logText.FontSize = 20;
+            logText.FontWeight = FontWeights.Normal;
+            logText.TextWrapping = TextWrapping.Wrap;
+            logText.IsReadOnly = true;
+            logText.AcceptsReturn = true;
+            logText.BorderThickness = new Thickness(0);
+            logText.Margin = new Thickness(0, 3, 0, 3);
+
+            int i = 0;
+            foreach (string line in lines) {
+                logText.Text += line + (i < lines.Count - 1 ? Environment.NewLine : string.Empty);
+                i++;
+            }
+
+            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
         }
     }
 }
