@@ -4,6 +4,9 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
+using BranchSdk.Enum;
+using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace BranchSdk {
     //TODO: It should be extracted into a separate uwp library
@@ -44,99 +47,222 @@ namespace BranchSdk {
             { PrefKeyType.IsReferrable, "branch_is_referrable" },
         };
 
-        public string GetSessionId() {
-            return Load(PrefKeyType.SessionId, string.Empty).Result;
-        }
+        private string sessionId;
+        private string identity;
+        private string identityId;
+        private string branchKey;
+        private string deviceFingerPrintId;
+        private string userUrl;
+        private string linkClickId;
+        private string sessionParams;
+        private string installParams;
+        private int isReferrable;
+        private Dictionary<string, int> creditCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> actionsTotalBase = new Dictionary<string, int>();
+        private Dictionary<string, int> actionsUniqueBase = new Dictionary<string, int>();
 
-        public string GetIdentity() {
-            return Load(PrefKeyType.Identity, string.Empty).Result;
-        }
-
-        public string GetIdentityId() {
-            return Load(PrefKeyType.IdentityId, string.Empty).Result;
-        }
-
-        public string GetBranchKey() {
-            return Load(PrefKeyType.BranchKey, string.Empty).Result;
-        }
-
-        public string GetDeviceFingerPrintId() {
-            return Load(PrefKeyType.DeviceFingerPrintId, string.Empty).Result;
-        }
-
-        public string GetUserUrl() {
-            return Load(PrefKeyType.UserUrl, string.Empty).Result;
-        }
-
-        public string GetLinkClickId() {
-            return Load(PrefKeyType.LinkClickedId, string.Empty).Result;
-        }
-
-        public string GetSessionParams() {
-            return Load(PrefKeyType.SessionParams, string.Empty).Result;
-        }
-
-        public string GetInstallParams() {
-            return Load(PrefKeyType.InstallParams, string.Empty).Result;
-        }
-
-        public int GetIsReferrable() {
-            return int.Parse(Load(PrefKeyType.IsReferrable, "0").Result);
-        }
-
-        public void SetSessionId(string sessionId) {
-            Save(PrefKeyType.SessionId, sessionId);
-        }
-
-        public void SetIdentity(string identity) {
-            Save(PrefKeyType.Identity, identity);
-        }
-
-        public void SetIdentityId(string identityId) {
-            Save(PrefKeyType.IdentityId, identityId);
-        }
-
-        public void SetBranchKey(string branchKey) {
-            Save(PrefKeyType.BranchKey, branchKey);
-        }
-
-        public void SetDeviceFingerPrintId(string deviceFingerPrintId) {
-            Save(PrefKeyType.DeviceFingerPrintId, deviceFingerPrintId);
-        }
-
-        public void SetUserUrl(string userUrl) {
-            Save(PrefKeyType.UserUrl, userUrl);
-        }
-
-        public void SetLinkClickId(string linkClickId) {
-            Save(PrefKeyType.LinkClickedId, linkClickId);
-        }
-
-        public void SetSessionParams(string sessionParams) {
-            Save(PrefKeyType.SessionParams, sessionParams);
-        }
-
-        public void SetInstallParams(string parameters) {
-            Save(PrefKeyType.InstallParams, parameters);
-        }
-
-        public void ClearIsReferrable() {
-            Save(PrefKeyType.IsReferrable, "0");
-        }
-
-        public void SetIsReferrable() {
-            Save(PrefKeyType.IsReferrable, "1");
-        }
+        private bool isLoaded = false;
 
         public string GetAPIBaseUrl() {
             return "https://api.branch.io/";
         }
 
+        public string GetSessionId() {
+            return sessionId;
+        }
+
+        public string GetIdentity() {
+            return identity;
+        }
+
+        public string GetIdentityId() {
+            return identityId;
+        }
+
+        public string GetBranchKey() {
+            return branchKey;
+        }
+
+        public string GetDeviceFingerPrintId() {
+            return deviceFingerPrintId;
+        }
+
+        public string GetUserUrl() {
+            return userUrl;
+        }
+
+        public string GetLinkClickId() {
+            return linkClickId;
+        }
+
+        public string GetSessionParams() {
+            return sessionParams;
+        }
+
+        public string GetInstallParams() {
+            return installParams;
+        }
+
+        public int GetIsReferrable() {
+            return isReferrable;
+        }
+
+        public int GetCreditCount() {
+            return GetCreditCount(BranchJsonKey.DefaultBucket.GetKey());
+        }
+
+        public int GetCreditCount(string bucket) {
+            if (creditCounts.ContainsKey(bucket)) {
+                return creditCounts[bucket];
+            }
+            return 0;
+        }
+
+        public void SetSessionId(string sessionId) {
+            this.sessionId = sessionId;
+        }
+
+        public void SetIdentity(string identity) {
+            this.identity = identity;
+        }
+
+        public void SetIdentityId(string identityId) {
+            this.identityId = identityId;
+        }
+
+        public void SetBranchKey(string branchKey) {
+            this.branchKey = branchKey;
+        }
+
+        public void SetDeviceFingerPrintId(string deviceFingerPrintId) {
+            this.deviceFingerPrintId = deviceFingerPrintId;
+        }
+
+        public void SetUserUrl(string userUrl) {
+            this.userUrl = userUrl;
+        }
+
+        public void SetLinkClickId(string linkClickId) {
+            this.linkClickId = linkClickId;
+        }
+
+        public void SetSessionParams(string sessionParams) {
+            this.sessionParams = sessionParams;
+        }
+
+        public void SetInstallParams(string installParams) {
+            this.installParams = installParams;
+        }
+
+        public void ClearIsReferrable() {
+            this.isReferrable = 0;
+        }
+
+        public void SetIsReferrable() {
+            this.isReferrable = 1;
+        }
+
+        public void SetCreditCount(string bucket, int count) {
+            if (creditCounts.ContainsKey(bucket)) {
+                creditCounts[bucket] = count;
+            } else {
+                creditCounts.Add(bucket, count);
+            }
+        }
+
+        public void SetActionTotalCount(string action, int count) {
+            if (actionsTotalBase.ContainsKey(action)) {
+                actionsTotalBase[action] = count;
+            } else {
+                actionsTotalBase.Add(action, count);
+            }
+        }
+
+        public void SetActionUniqueCount(string action, int count) {
+            if (actionsUniqueBase.ContainsKey(action)) {
+                actionsUniqueBase[action] = count;
+            } else {
+                actionsUniqueBase.Add(action, count);
+            }
+        }
+
+        public void ClearUserValues() {
+            creditCounts = new Dictionary<string, int>();
+            actionsTotalBase = new Dictionary<string, int>();
+            actionsUniqueBase = new Dictionary<string, int>();
+        }
+
+        public async Task LoadAll() {
+            sessionId = await Load(PrefKeyType.SessionId, string.Empty);
+            identity = await Load(PrefKeyType.Identity, string.Empty);
+            identityId = await Load(PrefKeyType.IdentityId, string.Empty);
+            branchKey = await Load(PrefKeyType.BranchKey, string.Empty);
+            deviceFingerPrintId = await Load(PrefKeyType.DeviceFingerPrintId, string.Empty);
+            userUrl = await Load(PrefKeyType.UserUrl, string.Empty);
+            linkClickId = await Load(PrefKeyType.LinkClickedId, string.Empty);
+            sessionParams = await Load(PrefKeyType.SessionParams, string.Empty);
+            installParams = await Load(PrefKeyType.InstallParams, string.Empty);
+            int.TryParse(await Load(PrefKeyType.IsReferrable, "0"), out isReferrable);
+
+            string creditCounts = await Load(PrefKeyType.CreditBase, string.Empty);
+            if (!string.IsNullOrEmpty(creditCounts)) {
+                try {
+                    this.creditCounts = JsonConvert.DeserializeObject<Dictionary<string, int>>(creditCounts);
+                } catch (Exception e) {
+                    Debug.WriteLine(e.StackTrace);
+                }
+            }
+            string actionsTotalBase = await Load(PrefKeyType.TotalBase, string.Empty);
+            if (!string.IsNullOrEmpty(actionsTotalBase)) {
+                try {
+                    this.actionsTotalBase = JsonConvert.DeserializeObject<Dictionary<string, int>>(actionsTotalBase);
+                } catch (Exception e) {
+                    Debug.WriteLine(e.StackTrace);
+                }
+            }
+            string actionsUniqueBase = await Load(PrefKeyType.UniqueBase, string.Empty);
+            if (!string.IsNullOrEmpty(actionsUniqueBase)) {
+                try {
+                    this.actionsUniqueBase = JsonConvert.DeserializeObject<Dictionary<string, int>>(actionsUniqueBase);
+                } catch (Exception e) {
+                    Debug.WriteLine(e.StackTrace);
+                }
+            }
+
+            isLoaded = true;
+
+            Debug.WriteLine("All prefs has beens loaded");
+        }
+
+        public async Task SaveAll() {
+            await Save(PrefKeyType.SessionId, sessionId);
+            await Save(PrefKeyType.Identity, identity);
+            await Save(PrefKeyType.IdentityId, identityId);
+            await Save(PrefKeyType.BranchKey, branchKey);
+            await Save(PrefKeyType.DeviceFingerPrintId, deviceFingerPrintId);
+            await Save(PrefKeyType.UserUrl, userUrl);
+            await Save(PrefKeyType.LinkClickedId, linkClickId);
+            await Save(PrefKeyType.SessionParams, sessionParams);
+            await Save(PrefKeyType.InstallParams, installParams);
+            await Save(PrefKeyType.IsReferrable, isReferrable.ToString());
+            await Save(PrefKeyType.CreditBase, JsonConvert.SerializeObject(this.creditCounts));
+            await Save(PrefKeyType.TotalBase, JsonConvert.SerializeObject(this.actionsTotalBase));
+            await Save(PrefKeyType.UniqueBase, JsonConvert.SerializeObject(this.actionsUniqueBase));
+        }
+
+        public bool IsLoaded {
+            get {
+                return isLoaded;
+            }
+        }
+
+        #region Base pref logic
+
         private async Task<string> Load(PrefKeyType key, string defaultValue = "") {
             IStorageFile prefFile = null;
             try {
                 prefFile = await ApplicationData.Current.LocalCacheFolder.GetFileAsync(string.Format("{0}{1}", PrefKeyMap[key], ".txt"));
-            } catch(FileNotFoundException ignore) { }
+            } catch (FileNotFoundException ignore) { }
             if (prefFile == null) {
                 prefFile = await ApplicationData.Current.LocalCacheFolder.CreateFileAsync(string.Format("{0}{1}", PrefKeyMap[key], ".txt"), CreationCollisionOption.OpenIfExists);
                 await FileIO.WriteTextAsync(prefFile, defaultValue);
@@ -144,101 +270,28 @@ namespace BranchSdk {
             return await FileIO.ReadTextAsync(prefFile);
         }
 
-        private async void Save(PrefKeyType key, string value) {
+        private async Task<string> Load(PrefKeyType key, string postfix, string defaultValue = "") {
+            IStorageFile prefFile = null;
+            try {
+                prefFile = await ApplicationData.Current.LocalCacheFolder.GetFileAsync(string.Format("{0}{1}{2}", PrefKeyMap[key], postfix, ".txt"));
+            } catch (FileNotFoundException ignore) { }
+            if (prefFile == null) {
+                prefFile = await ApplicationData.Current.LocalCacheFolder.CreateFileAsync(string.Format("{0}{1}{2}", PrefKeyMap[key], postfix, ".txt"), CreationCollisionOption.OpenIfExists);
+                await FileIO.WriteTextAsync(prefFile, defaultValue);
+            }
+            return await FileIO.ReadTextAsync(prefFile);
+        }
+
+        private async Task Save(PrefKeyType key, string value) {
             StorageFile prefFile = await ApplicationData.Current.LocalCacheFolder.CreateFileAsync(string.Format("{0}{1}", PrefKeyMap[key], ".txt"), CreationCollisionOption.ReplaceExisting);
             await FileIO.WriteTextAsync(prefFile, value);
         }
 
-        private async void Save(PrefKeyType key, string postfix, string value) {
+        private async Task Save(PrefKeyType key, string postfix, string value) {
             StorageFile prefFile = await ApplicationData.Current.LocalCacheFolder.CreateFileAsync(string.Format("{0}{1}{2}", PrefKeyMap[key], postfix, ".txt"), CreationCollisionOption.ReplaceExisting);
             await FileIO.WriteTextAsync(prefFile, value);
         }
 
-        public void ClearUserValues() {
-            List<string> buckets = GetBuckets();
-            foreach (string bucket in buckets) {
-                SetCreditCount(bucket, 0);
-            }
-            SetBuckets(new List<string>());
-
-            List<string> actions = GetActions();
-            foreach (string action in actions) {
-                SetActionTotalCount(action, 0);
-                SetActionUniqueCount(action, 0);
-            }
-            SetActions(new List<string>());
-        }
-
-        private List<string> GetActions() {
-            string actionList = Load(PrefKeyType.Actions, string.Empty).Result;
-            if (string.IsNullOrEmpty(actionList)) {
-                return new List<string>();
-            } else {
-                return DeserializeString(actionList);
-            }
-        }
-
-        private void SetActions(List<string> actions) {
-            if (actions.Count == 0) {
-                Save(PrefKeyType.Actions, string.Empty);
-            } else {
-                Save(PrefKeyType.Actions, SerializeArrayList(actions));
-            }
-        }
-
-        private List<String> GetBuckets() {
-            string bucketList = Load(PrefKeyType.Buckets, string.Empty).Result;
-            if (string.IsNullOrEmpty(bucketList)) {
-                return new List<string>();
-            } else {
-                return DeserializeString(bucketList);
-            }
-        }
-
-        private void SetBuckets(List<string> buckets) {
-            if (buckets.Count == 0) {
-                Save(PrefKeyType.Buckets, string.Empty);
-            } else {
-                Save(PrefKeyType.Buckets, SerializeArrayList(buckets));
-            }
-        }
-
-        public void SetCreditCount(string bucket, int count) {
-            List<string> buckets = GetBuckets();
-            if (!buckets.Contains(bucket)) {
-                buckets.Add(bucket);
-                SetBuckets(buckets);
-            }
-            Save(PrefKeyType.CreditBase, bucket, count.ToString());
-        }
-
-        public void SetActionTotalCount(string action, int count) {
-            List<string> actions = GetActions();
-            if (!actions.Contains(action)) {
-                actions.Add(action);
-                SetActions(actions);
-            }
-            Save(PrefKeyType.TotalBase, action, count.ToString());
-        }
-
-        public void SetActionUniqueCount(string action, int count) {
-            Save(PrefKeyType.UniqueBase, action, count.ToString());
-        }
-
-        private List<string> DeserializeString(string list) {
-            List<string> strings = new List<string>();
-            string[] stringArr = list.Split(new char[] { '"' });
-            strings.AddRange(stringArr);
-            return strings;
-        }
-
-        private string SerializeArrayList(List<string> strings) {
-            string retString = "";
-            foreach (string value in strings) {
-                retString = retString + value + ",";
-            }
-            retString = retString.Substring(0, retString.Length - 1);
-            return retString;
-        }
+        #endregion
     }
 }

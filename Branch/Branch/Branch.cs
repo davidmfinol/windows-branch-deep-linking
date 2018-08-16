@@ -1,4 +1,5 @@
 ﻿using BranchSdk.CrossPlatform;
+using BranchSdk.Enum;
 using BranchSdk.Net;
 using BranchSdk.Net.Requests;
 using Newtonsoft.Json.Linq;
@@ -74,6 +75,9 @@ namespace BranchSdk {
 
         private JObject deeplinkDebugParams;
 
+        public delegate void BranchGetRewardHistoryCallback(JArray jArray, BranchError error);
+        public delegate void BranchRedeemRewardsCallback(bool changed, BranchError error);
+        public delegate void BranchGetRewardsCallback(bool changed, BranchError error);
         public delegate void BranchLogoutCallback(bool loggedOut, BranchError error);
         public delegate void BranchIdentityUserCallback(JObject referringParams, BranchError error);
         public delegate void BranchInitCallbackWithDictionary(Dictionary<string, object> parameters, BranchError error);
@@ -82,6 +86,10 @@ namespace BranchSdk {
 
         private enum SessionState {
             Initialised, Initialising, Uninitialised
+        }
+
+        public enum CreditHistoryOrder {
+            KMostRecentFirst, KLeastRecentFirst
         }
 
         private SessionState initState = SessionState.Uninitialised;
@@ -190,6 +198,80 @@ namespace BranchSdk {
 
             BranchServerRequestQueue.AddRequest(request);
             BranchServerRequestQueue.RunQueue();
+        }
+
+        public void LoadRewards(Branch.BranchGetRewardsCallback callback) {
+            BranchServerGetRewards request = new BranchServerGetRewards(callback);
+            request.RequestType = RequestTypes.GET;
+
+            BranchServerRequestQueue.AddRequest(request);
+            BranchServerRequestQueue.RunQueue();
+        }
+
+        public void RedeemRewards(int count) {
+            RedeemRewards(BranchJsonKey.DefaultBucket.GetKey(), count, null);
+        }
+
+        public void RedeemRewards(int count, BranchRedeemRewardsCallback callback) {
+            RedeemRewards(BranchJsonKey.DefaultBucket.GetKey(), count, callback);
+        }
+
+        public void RedeemRewards(string bucket, int count) {
+            RedeemRewards(bucket, count, null);
+        }
+
+        public void RedeemRewards(string bucket, int count, BranchRedeemRewardsCallback callback) {
+            BranchServerRedeemRewards request = new BranchServerRedeemRewards(bucket, count, callback);
+            request.RequestType = RequestTypes.POST;
+
+            BranchServerRequestQueue.AddRequest(request);
+            BranchServerRequestQueue.RunQueue();
+        }
+
+        public void UserCompletedAction(string action, JObject metadata) {
+            UserCompletedAction(action, metadata, null);
+        }
+
+        public void UserCompletedAction(string action) {
+            UserCompletedAction(action, null, null);
+        }
+
+        //TODO CHANGE CALLBACK
+        public void UserCompletedAction(string action, Action callback) {
+            UserCompletedAction(action, null, callback);
+        }
+
+        //TODO CHANGE CALLBACK
+        public void UserCompletedAction(string action, JObject metadata, Action callback) {
+            BranchServerActionCompleted request = new BranchServerActionCompleted(action, metadata);
+            request.RequestType = RequestTypes.POST;
+
+            BranchServerRequestQueue.AddRequest(request);
+            BranchServerRequestQueue.RunQueue();
+        }
+
+        public void GetCreditHistory(BranchGetRewardHistoryCallback callback) {
+            GetCreditHistory(string.Empty, string.Empty, 100, CreditHistoryOrder.KMostRecentFirst, callback);
+        }
+
+        public void GetCreditHistory(string bucket, BranchGetRewardHistoryCallback callback) {
+            GetCreditHistory(bucket, string.Empty, 100, CreditHistoryOrder.KMostRecentFirst, callback);
+        }
+
+        public void GetCreditHistory(string afterID, int length, CreditHistoryOrder order, BranchGetRewardHistoryCallback callback) {
+            GetCreditHistory(string.Empty, afterID, length, order, callback);
+        }
+
+        public void GetCreditHistory(string bucket, string afterId, int length, CreditHistoryOrder order, BranchGetRewardHistoryCallback callback) {
+            BranchServerGetRewardHistory request = new BranchServerGetRewardHistory(bucket, afterId, length, order, callback);
+            request.RequestType = RequestTypes.GET;
+
+            BranchServerRequestQueue.AddRequest(request);
+            BranchServerRequestQueue.RunQueue();
+        }
+
+        public int GetCredits() {
+            return LibraryAdapter.GetPrefHelper().GetCreditCount();
         }
 
         private bool HasUser() {

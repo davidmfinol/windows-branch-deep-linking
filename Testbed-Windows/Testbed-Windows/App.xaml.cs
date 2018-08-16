@@ -1,4 +1,5 @@
 ﻿using BranchSdk;
+using BranchSdk.CrossPlatform;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -129,10 +130,11 @@ namespace TestbedWindows
         /// </summary>
         /// <param name="sender">The source of the suspend request.</param>
         /// <param name="e">Details about the suspend request.</param>
-        private void OnSuspending(object sender, SuspendingEventArgs e)
+        private async void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
+            await LibraryAdapter.GetPrefHelper().SaveAll();
             deferral.Complete();
         }
     }

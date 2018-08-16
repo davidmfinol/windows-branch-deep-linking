@@ -1,4 +1,6 @@
-﻿namespace BranchSdk {
+﻿using System.Threading.Tasks;
+
+namespace BranchSdk {
     public interface IBranchPrefHelper {
         string GetAPIBaseUrl();
         string GetBranchKey();
@@ -11,6 +13,8 @@
         string GetUserUrl();
         string GetInstallParams();
         int GetIsReferrable();
+        int GetCreditCount();
+        int GetCreditCount(string bucket);
         void SetBranchKey(string branchKey);
         void SetDeviceFingerPrintId(string deviceFingerPrintId);
         void SetIdentity(string identity);
@@ -26,5 +30,8 @@
         void SetActionUniqueCount(string action, int count);
         void ClearIsReferrable();
         void SetIsReferrable();
+        Task LoadAll();
+        Task SaveAll();
+        bool IsLoaded { get; }
     }
 }

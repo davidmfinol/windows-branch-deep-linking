@@ -1,4 +1,5 @@
 
+
 # Branch Metrics Android SDK
 
 ## Technical Documentation
@@ -21,11 +22,16 @@
   + [Integrating the Branch SDK](#integrating-the-branch-sdk)
 
 4. [**Branch SDK Method Reference**](#4---branch-sdk-method-reference)  
+  + [Initialize Branch](#initialize-Branch)
   + [Retrieve install (install only) parameters](#retrieve-install-install-only-parameters)  
-  + [Persistent identities](#persistent-identities)  
-  + [Logout](#logout)  
+  + [Persistent identities](#persistent-identities)
+  + [Logout](#logout)
   + [Tracking User Actions and Events](#tracking-user-actions-and-events)
-  + [Generating Branch links](#generating-branch-links)  
+  + [Generating Branch links](#generating-branch-links)
+  + [Referral rewards](#referral-rewards)
+  + [Check a reward balance](#check-a-reward-balance)
+  + [Redeem all or some of the reward balance](redeem-all-or-some-of-the-reward-balance)
+  + [Get credit history](#get-credit-history)
 
 ___
 
@@ -33,7 +39,7 @@ ___
 
 ### SDK Details
 
-Current version: **0.0.1**
+Current version: **0.0.3**
 
 ### Resources
 - This document - *Start Here*
@@ -90,7 +96,7 @@ First need add Newtonsoft.Json from NuGet
 #### **Adding the Branch SDK**
 
 1. Clone this repository to the local machine: `https://github.com/BranchMetrics/branch-windows-sdk.git`
-2. Add the `branch_debug_0.0.1` or `branch_0.0.1` libary to project from DLLs folder
+2. Add the `branch_debug_0.0.3` or `branch_0.0.3` libary to project from DLLs folder
 
 ___
 
@@ -98,113 +104,127 @@ ___
 
 **I. Create project in visual studio**  
 
- 1. Open Visual Studio and create a new Blank App (Windows Universal) project
+* Open Visual Studio and create a new Blank App (Windows Universal) project
 
 **II. Register app to  handle deep link**  
 
- 1. Select `Package.appxmanifest` in Solution Explorer and press `F7`
- 2. Add the **Windows.appUriHandler** extension with your link:
-	```xml
-	<Applications>
-		<Application ... > ...
-			<Extensions>
-				<uap3:Extension Category="windows.appUriHandler">
-					<uap3:AppUriHandler>  
-						<uap3:Host Name="testbed-windows.app.link" />
-					</uap3:AppUriHandler>  
-				</uap3:Extension>
-			</Extensions>
-		</Application>
-	</Applications>
-	```
+* Select `Package.appxmanifest` in Solution Explorer and press `F7`
 
- 3. Add `DeepLinkHandler.cs` in your project and write in it notification system that the application was activated by deep link for MainPage.xaml.cs, for example:
-	```csharp
-	public static class DeepLinkHandler {
-       public static event Action<string> OnAppDeepLinkEvent = delegate { };
+* Add the **Windows.appUriHandler** extension with your link:
 
-       public static void OnAppDeepLink(string url) {
-           OnAppDeepLinkEvent.Invoke(url);
-       }
-	}
-	``` 
- 4. Navigate to **App.xaml.cs** in your app’s Visual Studio solution and in **OnActivated()** add handling for linked content:
-	 ```csharp
-     protected override void OnActivated(IActivatedEventArgs e) {
-        Frame rootFrame = Window.Current.Content as Frame;
+```xml
+		<Applications>
+			<Application> 
+				<Extensions>
+					<uap3:Extension Category="windows.appUriHandler">
+						<uap3:AppUriHandler>
+							<uap3:Host Name="testbed-windows.app.link" />
+						</uap3:AppUriHandler>
+					</uap3:Extension>
+				</Extensions>
+			</Application>
+		</Applications>
+```
+        
+* Add `DeepLinkHandler.cs` in your project and write in it notification system that the application was activated by deep link for MainPage.xaml.cs, for example:
 
-        if (rootFrame == null) {
-            // Create a Frame to act as the navigation context and navigate to the first page
-            rootFrame = new Frame();
-            rootFrame.NavigationFailed += OnNavigationFailed;
+```csharp
+        public static class DeepLinkHandler {
+            public static event Action<string> OnAppDeepLinkEvent = delegate { };
 
-            Window.Current.Content = rootFrame;
+            public static void OnAppDeepLink(string url) {
+                OnAppDeepLinkEvent.Invoke(url);
+            }
         }
+``` 
+	
+* Navigate to **App.xaml.cs** in your app�s Visual Studio solution and in **OnActivated()** add handling for linked content:
 
-        Type deepLinkPageType = typeof(MainPage);
-        if (e.Kind == ActivationKind.Protocol) {
-            var protocolArgs = (ProtocolActivatedEventArgs)e;
-            DeepLinkHandler.OnAppDeepLink(protocolArgs.Uri.AbsoluteUri);
-        }
+```csharp
+		protected override void OnActivated(IActivatedEventArgs e) {
+			Frame rootFrame = Window.Current.Content as Frame;
 
-        if (rootFrame.Content == null) {
-            // Default navigation
-            rootFrame.Navigate(deepLinkPageType, e);
-        }
+			if (rootFrame == null) {
+			// Create a Frame to act as the navigation context and navigate to the first page
+			rootFrame = new Frame();
+			rootFrame.NavigationFailed += OnNavigationFailed;
 
-        // Ensure the current window is active
-        Window.Current.Activate();
-    }
-	```
- 5. Subscribe to `OnAppDeepLink` event in MainPage.xaml.cs and in callback handler call InitSession with uri
- 
+			Window.Current.Content = rootFrame;
+			}
+
+			Type deepLinkPageType = typeof(MainPage);
+			if (e.Kind == ActivationKind.Protocol) {
+			var protocolArgs = (ProtocolActivatedEventArgs)e;
+			DeepLinkHandler.OnAppDeepLink(protocolArgs.Uri.AbsoluteUri);
+			}
+
+			if (rootFrame.Content == null) {
+			// Default navigation
+			rootFrame.Navigate(deepLinkPageType, e);
+			}
+
+			// Ensure the current window is active
+			Window.Current.Activate();
+		}
+```
+* Subscribe to `OnAppDeepLink` event in MainPage.xaml.cs and in callback handler call InitSession with uri
+* Change `OnSuspending` method in App.xaml.cs
+
+```csharp
+		private async void OnSuspending(object sender, SuspendingEventArgs e)
+		{
+			var deferral = e.SuspendingOperation.GetDeferral();
+			//TODO: Save application state and stop any background activity
+			await LibraryAdapter.GetPrefHelper().SaveAll();
+			deferral.Complete();
+		}
+```
+	
 **III. Add Branch calls to MainPage.xaml.cs**  
 
 Below is an example of usage BranchSdk in Universal App
+
 ```csharp
-/// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
-/// </summary>
-public sealed partial class MainPage : Page
-{
-    public MainPage()
-    {
-        this.InitializeComponent();
-        LibraryAdapter.GetPrefHelper().SetBranchKey("branch key here");
-        Main();
-    }
+        /// <summary>
+        /// An empty page that can be used on its own or navigated to within a Frame.
+        /// </summary>
+        public sealed partial class MainPage : Page
+        {
+            public MainPage()
+            {
+                this.InitializeComponent();
+                Main();
+            }
 
-    public void Main() {
-        Task.Run(() => {
-            Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => {
-                List<string> lines = new List<string>();
-                lines.Add("Init session, parameters: ");
-                foreach (string key in parameters.Keys) {
-                    lines.Add(key + " - " + parameters[key]);
-                }
+            public void Main() {
                 Task.Run(async () => {
-                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                        AddLog(lines);
-                    });
+                    await LibraryAdapter.GetPrefHelper().LoadAll();
+                    Debug.WriteLine("Setup test branch key");
+                    LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs");
+
+                    Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
+                        List<string> lines = new List<string>();
+                        lines.Add("Init session, parameters: ");
+                        foreach (string key in parameters.Keys) {
+                            lines.Add(key + " - " + parameters[key]);
+                        }
+                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                            AddLog(lines);
+                        });
+                    }));
                 });
-            }));
-        });
-    }
+            }
 
-    private void OnCalleventClicked(object sender, RoutedEventArgs e) {
-        Task.Run(() => {
-            BranchEvent ev = new BranchEvent("test_custom_events")
-                .SetDescription("Test description")
-                .SetTransactionID("322")
-                .AddCustomDataProperty("TestProperty", "TestValue");
-            ev.LogEvent();
-        });
-    }
+            private void OnCalleventClicked(object sender, RoutedEventArgs e) {
+                BranchEvent ev = new BranchEvent("test_custom_events")
+                        .SetDescription("Test description")
+                        .SetTransactionID("322")
+                        .AddCustomDataProperty("TestProperty", "TestValue");
+                ev.LogEvent();
+            }
 
-    private void OnIdentityClicked(object sender, RoutedEventArgs e) {
-        Task.Run(() => {
-            Branch.I.SetIdentity("User1488", (referringParams, error) => {
-                Task.Run(async () => {
+            private void OnIdentityClicked(object sender, RoutedEventArgs e) {
+                Branch.I.SetIdentity("User1488", async (referringParams, error) => {
                     await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
                         List<string> lines = new List<string>();
                         lines.Add("Set identity, response: " + referringParams.ToString());
@@ -212,101 +232,156 @@ public sealed partial class MainPage : Page
                         AddLog(lines);
                     });
                 });
-            });
-        });
-    }
+            }
 
-    private void AddLog(string text) {
-        TextBox logText = new TextBox();
-        logText.FontSize = 20;
-        logText.FontWeight = FontWeights.Normal;
-        logText.TextWrapping = TextWrapping.Wrap;
-        logText.IsReadOnly = true;
-        logText.AcceptsReturn = true;
-        logText.BorderThickness = new Thickness(0);
-        logText.Margin = new Thickness(0, 3, 0, 3);
-        logText.Text = text;
+            private void OnGetShortLinkClicked(object sender, RoutedEventArgs e) {
+                BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
+                       .SetCanonicalIdentifier("item/12345")
+                       .SetCanonicalUrl("https://branch.io/deepviews")
+                       .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
+                       .SetLocalIndexMode(BranchUniversalObject.ContentIndexModes.PUBLIC)
+                       .SetTitle("My Content Title")
+                       .SetContentDescription("my_product_description1")
+                       .SetContentImageUrl("https://example.com/mycontent-12345.png")
+                       .SetContentExpiration(DateTime.UtcNow)
+                       .SetContentImageUrl("https://test_img_url")
+                       .AddKeyWord("My_Keyword1")
+                       .AddKeyWord("My_Keyword2")
+                       .SetContentMetadata(
+                            new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
+                       );
 
-        (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-    }
+                BranchLinkProperties linkProperties = new BranchLinkProperties()
+                         .AddTag("Tag1")
+                         .SetChannel("Sharing_Channel_name")
+                         .SetFeature("my_feature_name")
+                         .AddControlParameter("$android_deeplink_path", "custom/path/*")
+                         .AddControlParameter("$ios_url", "http://example.com/ios")
+                         .SetDuration(100);
 
-    private void AddLog(List<string> lines) {
-        TextBox logText = new TextBox();
-        logText.FontSize = 20;
-        logText.FontWeight = FontWeights.Normal;
-        logText.TextWrapping = TextWrapping.Wrap;
-        logText.IsReadOnly = true;
-        logText.AcceptsReturn = true;
-        logText.BorderThickness = new Thickness(0);
-        logText.Margin = new Thickness(0, 3, 0, 3);
-
-        int i = 0;
-        foreach(string line in lines) {
-            logText.Text += line + (i < lines.Count - 1 ? Environment.NewLine : string.Empty);
-            i++;
-        }
-
-        (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-    }
-
-    private void OnGetShortLinkClicked(object sender, RoutedEventArgs e) {
-        Task.Run(() => {
-            BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
-               .SetCanonicalIdentifier("item/12345")
-               .SetCanonicalUrl("https://branch.io/deepviews")
-               .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
-               .SetLocalIndexMode(BranchUniversalObject.ContentIndexModes.PUBLIC)
-               .SetTitle("My Content Title")
-               .SetContentDescription("my_product_description1")
-               .SetContentImageUrl("https://example.com/mycontent-12345.png")
-               .SetContentExpiration(DateTime.UtcNow)
-               .SetContentImageUrl("https://test_img_url")
-               .AddKeyWord("My_Keyword1")
-               .AddKeyWord("My_Keyword2")
-               .SetContentMetadata(
-                    new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
-               );
-
-            BranchLinkProperties linkProperties = new BranchLinkProperties()
-                     .AddTag("Tag1")
-                     .SetChannel("Sharing_Channel_name")
-                     .SetFeature("my_feature_name")
-                     .AddControlParameter("$android_deeplink_path", "custom/path/*")
-                     .AddControlParameter("$ios_url", "http://example.com/ios")
-                     .SetDuration(100);
-
-            Task.Run(async () => {
-                string url = branchUniversalObject.GetShortURL(linkProperties);
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Short url: " + url);
-                    AddLog(lines);
-                });
-            });
-        });
-    }
-
-    private void OnLogoutClicked(object sender, RoutedEventArgs e) {
-        Task.Run(() => {
-            Branch.I.Logout((logout, error) => {
                 Task.Run(async () => {
+                    string url = branchUniversalObject.GetShortURL(linkProperties);
                     await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
                         List<string> lines = new List<string>();
-                        lines.Add("Logout status: " + logout);
+                        lines.Add("Short url: " + url);
+                        AddLog(lines);
+                    });
+                });
+            }
+
+            private void OnLogoutClicked(object sender, RoutedEventArgs e) {
+                Branch.I.Logout((logout, error) => {
+                    Task.Run(async () => {
+                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                            List<string> lines = new List<string>();
+                            lines.Add("Logout status: " + logout);
+                            lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                            AddLog(lines);
+                        });
+                    });
+                });
+            }
+
+            private void OnGetCreditsClicked(object sender, RoutedEventArgs e) {
+                Branch.I.LoadRewards(async (changed, error) => {
+                    int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                        List<string> lines = new List<string>();
+                        lines.Add("Credits count: " + credits);
                         lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
                         AddLog(lines);
                     });
                 });
-            });
-        });
-    }
-}
+            }
+
+            private void OnRedeemFiveClicked(object sender, RoutedEventArgs e) {
+                Branch.I.RedeemRewards(5, async (changed, error) => {
+                    int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                        List<string> lines = new List<string>();
+                        lines.Add("Credits count: " + credits);
+                        lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                        AddLog(lines);
+                    });
+                });
+            }
+
+            private void OnBuyWithMetadataClicked(object sender, RoutedEventArgs e) {
+                JObject parameters = new JObject();
+                parameters.Add("name", "Alex");
+                parameters.Add("boolean", true);
+                parameters.Add("int", 1);
+                parameters.Add("double", 0.13415512301);
+
+                Branch.I.UserCompletedAction("buy", parameters);
+            }
+
+            private void OnGetCreditHistoryClicked(object sender, RoutedEventArgs e) {
+                Branch.I.GetCreditHistory(async (response, error) => {
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                        List<string> lines = new List<string>();
+                        if(response != null) {
+                            foreach(JObject prop in response) {
+                                JObject transaction = prop["transaction"].Value<JObject>();
+                                StringBuilder sb = new StringBuilder();
+                                sb.Append(transaction["date"].Value<string>() + " - ");
+                                sb.Append(transaction["bucket"].Value<string>() + ", amount: ");
+                                sb.Append(transaction["amount"].Value<int>());
+                                lines.Add(sb.ToString());
+                            }
+                        }
+                        lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                        AddLog(lines);
+                    });
+                });
+            }
+
+            private void AddLog(string text) {
+                TextBox logText = new TextBox();
+                logText.FontSize = 20;
+                logText.FontWeight = FontWeights.Normal;
+                logText.TextWrapping = TextWrapping.Wrap;
+                logText.IsReadOnly = true;
+                logText.AcceptsReturn = true;
+                logText.BorderThickness = new Thickness(0);
+                logText.Margin = new Thickness(0, 3, 0, 3);
+                logText.Text = text;
+
+                (this.FindName("LogStack") as StackPanel).Children.Add(logText);
+            }
+
+            private void AddLog(List<string> lines) {
+                TextBox logText = new TextBox();
+                logText.FontSize = 20;
+                logText.FontWeight = FontWeights.Normal;
+                logText.TextWrapping = TextWrapping.Wrap;
+                logText.IsReadOnly = true;
+                logText.AcceptsReturn = true;
+                logText.BorderThickness = new Thickness(0);
+                logText.Margin = new Thickness(0, 3, 0, 3);
+
+                int i = 0;
+                foreach (string line in lines) {
+                    logText.Text += line + (i < lines.Count - 1 ? Environment.NewLine : string.Empty);
+                    i++;
+                }
+
+                (this.FindName("LogStack") as StackPanel).Children.Add(logText);
+            }
+        }
 ```
 ___
 
 ## 4 - Branch SDK Method Reference
 
-### Retrieve install (install only) parameters
+#### Initialize Branch
+
+```csharp
+Branch.I.InitSession(new BranchInitCallbackWrapper((buo, linkProperties, error) => { }));
+Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => { }));
+```
+
+#### Retrieve install (install only) parameters
 
 If you ever want to access the original session params (the parameters passed in for the first install event only), you can use this line. This is useful if you only want to reward users who newly installed the app from a referral link or something.
 
@@ -314,7 +389,7 @@ If you ever want to access the original session params (the parameters passed in
 JObject installParams = Branch.I.GetFirstParams();
 ```
 
-### Persistent identities
+#### Persistent identities
 
 Often, you might have the own user IDs, or want referral and event data to persist across platforms or uninstall/reinstall. It's helpful if you know the users access the service from different devices. This where we introduce the concept of an 'identity'.
 
@@ -329,9 +404,9 @@ Branch.I.SetIdentity("User1488", (referringParams, error) => { //callback });
 If you provide a logout function in the app, be sure to clear the user when the logout completes. This will ensure that all the stored parameters get cleared and all events are properly attributed to the right identity.
 
 **Warning** this call will clear the referral credits and attribution on the device.
-
+  
 ```csharp
- Branch.I.Logout((logout, error) => { //callback });
+Branch.I.Logout((logout, error) => { //callback });
 ```
 
 ### Tracking User Actions and Events
@@ -414,9 +489,88 @@ You have the ability to control the direct deep linking of each link by insertin
 | "$always_deeplink" | true or false. (default is not to deep link first) This key can be specified to have our linking service force try to open the app, even if we're not sure the user has the app installed. If the app is not installed, we fall back to the respective app store or $platform_url key. By default, we only open the app if we've seen a user initiate a session in the app from a Branch link (has been cookied and deep linked by Branch)
 
 
-#### Initialize Branch
+### Referral rewards
+
+In a standard referral system, you have 2 parties: the original user and the invitee. Our system is flexible enough to handle rewards for all users. Here are a couple example scenarios:
+
+1) Reward the original user for taking action (eg. inviting, purchasing, etc)
+
+2) Reward the invitee for installing the app from the original user's referral link
+
+3) Reward the original user when the invitee takes action (eg. give the original user credit when their the invitee buys something)
+
+These reward definitions are created on the dashboard, under the 'Reward Rules' section in the 'Referrals' tab on the dashboard.
+
+Warning: For a referral program, you should not use unique awards for custom events and redeem pre-identify call. This can allow users to cheat the system.
+
+#### Check a reward balance
+
+Reward balances change randomly on the backend when certain actions are taken (defined by the rules), so you'll need to make an asynchronous call to retrieve the balance. Here is the syntax:
 
 ```csharp
-Branch.I.InitSession(new BranchInitCallbackWrapper((buo, linkProperties, error) => { }));
-Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => { }));
+        Branch.I.LoadRewards(async (changed, error) => {
+            //callback
+        });
 ```
+
+#### Redeem all or some of the reward balance
+
+We will store how many of the rewards have been deployed so that you don't have to track it on the end. In order to save that you gave the credits to the user, you can call redeem. Redemptions will reduce the balance of outstanding credits permanently.
+
+```csharp
+        Branch.I.RedeemRewards(5, async (changed, error) => {
+            //callback
+        });
+```
+
+#### Get credit history
+
+This call will retrieve the entire history of credits and redemptions from the individual user.  It also implements the IBranchRewardsInterface(see above). To use this call, implement like so:
+
+```csharp
+        Branch.I.GetCreditHistory(async (response, error) => {
+            //callback
+        });
+```
+
+The response will return an array that has been parsed from the following JSON:
+```json
+        [
+            {
+                "transaction": {
+                                   "date": "2014-10-14T01:54:40.425Z",
+                                   "id": "50388077461373184",
+                                   "bucket": "default",
+                                   "type": 0,
+                                   "amount": 5
+                               },
+                "referrer": "12345678",
+                "referree": null
+            },
+            {
+                "transaction": {
+                                   "date": "2014-10-14T01:55:09.474Z",
+                                   "id": "50388199301710081",
+                                   "bucket": "default",
+                                   "type": 2,
+                                   "amount": -3
+                               },
+                "referrer": null,
+                "referree": "12345678"
+            }
+        ]
+```
+
+**referrer**
+: The id of the referring user for this credit transaction. Returns null if no referrer is involved. Note this id is the user id in developer's own system that's previously passed to Branch's identify user API call.
+
+**referree**
+: The id of the user who was referred for this credit transaction. Returns null if no referree is involved. Note this id is the user id in developer's own system that's previously passed to Branch's identify user API call.
+
+**type**
+: This is the type of credit transaction
+
+1. _0_ - A reward that was added automatically by the user completing an action or referral
+1. _1_ - A reward that was added manually
+2. _2_ - A redemption of credits that occurred through our API or SDKs
+3. _3_ - This is a very unique case where we will subtract credits automatically when we detect fraud

@@ -6,6 +6,9 @@ using BranchSdk;
 using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
 using Windows.UI.Text;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
+using System.Text;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -19,55 +22,49 @@ namespace TestbedWindows
         public MainPage()
         {
             this.InitializeComponent();
-            LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs"); //temp
             Main();
         }
 
         public void Main() {
-            Task.Run(() => {
-                Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => {
+            Task.Run(async () => {
+                await LibraryAdapter.GetPrefHelper().LoadAll();
+                Debug.WriteLine("Setup test branch key");
+                LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs");
+
+                Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
                     List<string> lines = new List<string>();
                     lines.Add("Init session, parameters: ");
                     foreach (string key in parameters.Keys) {
                         lines.Add(key + " - " + parameters[key]);
                     }
-                    Task.Run(async () => {
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                            AddLog(lines);
-                        });
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                        AddLog(lines);
                     });
                 }));
             });
         }
 
         private void OnCalleventClicked(object sender, RoutedEventArgs e) {
-            Task.Run(() => {
-                BranchEvent ev = new BranchEvent("test_custom_events")
+            BranchEvent ev = new BranchEvent("test_custom_events")
                     .SetDescription("Test description")
                     .SetTransactionID("322")
                     .AddCustomDataProperty("TestProperty", "TestValue");
-                ev.LogEvent();
-            });
+            ev.LogEvent();
         }
 
         private void OnIdentityClicked(object sender, RoutedEventArgs e) {
-            Task.Run(() => {
-                Branch.I.SetIdentity("User1488", (referringParams, error) => {
-                    Task.Run(async () => {
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                            List<string> lines = new List<string>();
-                            lines.Add("Set identity, response: " + referringParams.ToString());
-                            lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                            AddLog(lines);
-                        });
-                    });
+            Branch.I.SetIdentity("User1488", async (referringParams, error) => {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    List<string> lines = new List<string>();
+                    lines.Add("Set identity, response: " + referringParams.ToString());
+                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                    AddLog(lines);
                 });
             });
         }
 
         private void OnGetShortLinkClicked(object sender, RoutedEventArgs e) {
-            Task.Run(() => {
-                BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
+            BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
                    .SetCanonicalIdentifier("item/12345")
                    .SetCanonicalUrl("https://branch.io/deepviews")
                    .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
@@ -83,36 +80,87 @@ namespace TestbedWindows
                         new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
                    );
 
-                BranchLinkProperties linkProperties = new BranchLinkProperties()
-                         .AddTag("Tag1")
-                         .SetChannel("Sharing_Channel_name")
-                         .SetFeature("my_feature_name")
-                         .AddControlParameter("$android_deeplink_path", "custom/path/*")
-                         .AddControlParameter("$ios_url", "http://example.com/ios")
-                         .SetDuration(100);
+            BranchLinkProperties linkProperties = new BranchLinkProperties()
+                     .AddTag("Tag1")
+                     .SetChannel("Sharing_Channel_name")
+                     .SetFeature("my_feature_name")
+                     .AddControlParameter("$android_deeplink_path", "custom/path/*")
+                     .AddControlParameter("$ios_url", "http://example.com/ios")
+                     .SetDuration(100);
 
+            Task.Run(async () => {
+                string url = branchUniversalObject.GetShortURL(linkProperties);
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    List<string> lines = new List<string>();
+                    lines.Add("Short url: " + url);
+                    AddLog(lines);
+                });
+            });
+        }
+
+        private void OnLogoutClicked(object sender, RoutedEventArgs e) {
+            Branch.I.Logout((logout, error) => {
                 Task.Run(async () => {
-                    string url = branchUniversalObject.GetShortURL(linkProperties);
                     await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
                         List<string> lines = new List<string>();
-                        lines.Add("Short url: " + url);
+                        lines.Add("Logout status: " + logout);
+                        lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
                         AddLog(lines);
                     });
                 });
             });
         }
 
-        private void OnLogoutClicked(object sender, RoutedEventArgs e) {
-            Task.Run(() => {
-                Branch.I.Logout((logout, error) => {
-                    Task.Run(async () => {
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                            List<string> lines = new List<string>();
-                            lines.Add("Logout status: " + logout);
-                            lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                            AddLog(lines);
-                        });
-                    });
+        private void OnGetCreditsClicked(object sender, RoutedEventArgs e) {
+            Branch.I.LoadRewards(async (changed, error) => {
+                int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    List<string> lines = new List<string>();
+                    lines.Add("Credits count: " + credits);
+                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                    AddLog(lines);
+                });
+            });
+        }
+
+        private void OnRedeemFiveClicked(object sender, RoutedEventArgs e) {
+            Branch.I.RedeemRewards(5, async (changed, error) => {
+                int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    List<string> lines = new List<string>();
+                    lines.Add("Credits count: " + credits);
+                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                    AddLog(lines);
+                });
+            });
+        }
+
+        private void OnBuyWithMetadataClicked(object sender, RoutedEventArgs e) {
+            JObject parameters = new JObject();
+            parameters.Add("name", "Alex");
+            parameters.Add("boolean", true);
+            parameters.Add("int", 1);
+            parameters.Add("double", 0.13415512301);
+
+            Branch.I.UserCompletedAction("buy", parameters);
+        }
+
+        private void OnGetCreditHistoryClicked(object sender, RoutedEventArgs e) {
+            Branch.I.GetCreditHistory(async (response, error) => {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    List<string> lines = new List<string>();
+                    if(response != null) {
+                        foreach(JObject prop in response) {
+                            JObject transaction = prop["transaction"].Value<JObject>();
+                            StringBuilder sb = new StringBuilder();
+                            sb.Append(transaction["date"].Value<string>() + " - ");
+                            sb.Append(transaction["bucket"].Value<string>() + ", amount: ");
+                            sb.Append(transaction["amount"].Value<int>());
+                            lines.Add(sb.ToString());
+                        }
+                    }
+                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
+                    AddLog(lines);
                 });
             });
         }

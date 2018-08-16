@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BranchSdk</RootNamespace>
-    <AssemblyName>branch_debug_0.0.2</AssemblyName>
+    <AssemblyName>branch_debug_0.0.3</AssemblyName>
     <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17134.0</TargetPlatformVersion>
@@ -128,12 +128,17 @@
     <Compile Include="Enum\BranchStandartEvent.cs" />
     <Compile Include="Interface\IBranchPrefHelper.cs" />
     <Compile Include="Interface\IBranchSystemObserver.cs" />
+    <Compile Include="Net\BranchRequestHelper.cs" />
     <Compile Include="Net\BranchServerRequestQueue.cs" />
     <Compile Include="Net\Requests\BranchRequestResponse.cs" />
+    <Compile Include="Net\Requests\BranchServerActionCompleted.cs" />
     <Compile Include="Net\Requests\BranchServerCreateUrl.cs" />
+    <Compile Include="Net\Requests\BranchServerGetRewardHistory.cs" />
+    <Compile Include="Net\Requests\BranchServerGetRewards.cs" />
     <Compile Include="Net\Requests\BranchServerIdentifyUser.cs" />
     <Compile Include="Net\Requests\BranchServerLogEvent.cs" />
     <Compile Include="Net\Requests\BranchServerLogout.cs" />
+    <Compile Include="Net\Requests\BranchServerRedeemRewards.cs" />
     <Compile Include="Net\Requests\BranchServerRegisterInstall.cs" />
     <Compile Include="Net\Requests\BranchServerRegisterOpen.cs" />
     <Compile Include="Net\Requests\BranchServerRequest.cs" />

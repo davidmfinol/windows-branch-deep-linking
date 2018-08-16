@@ -1,5 +1,8 @@
 Branch Windows SDK change log
 
+- 0.0.3
+  * Adding reward/credits features
+
 - 0.0.2
   * Make a request to the api when it goes from the background to the foreground
 

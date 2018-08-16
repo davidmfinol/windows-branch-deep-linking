@@ -29,6 +29,10 @@ namespace BranchSdk.Net.Requests {
             }
         }
 
+        public string RequestParameters {
+            get; set;
+        }
+
         public JObject PostData {
             get {
                 return postData;
@@ -42,27 +46,23 @@ namespace BranchSdk.Net.Requests {
         }
 
         public virtual string RequestUrl() {
-            return LibraryAdapter.GetPrefHelper().GetAPIBaseUrl() + requestPath;
+            return LibraryAdapter.GetPrefHelper().GetAPIBaseUrl() + requestPath + RequestParameters;
         }
 
         public void SetPost(JObject postData) {
             this.postData = postData;
+
+            if (this.postData == null) this.postData = new JObject();
 
             if (ApiVersion == BranchApiVersions.V2) {
                 JObject userData = new JObject();
                 BranchDeviceInfo.UpdateRequestWithUserData(userData);
                 this.postData.Add(BranchJsonKey.UserData.GetKey(), userData);
             } else {
-                BranchDeviceInfo.UpdateRequestWithUserData(postData);
+                BranchDeviceInfo.UpdateRequestWithUserData(this.postData);
             }
 
-            AddCommonParams(postData);
-
-            //Debug.WriteLine(this.postData.ToString());
-        }
-
-        public void AddCommonParams(JObject postData) {
-            postData.Add(BranchJsonKey.BranchKey.GetKey(), LibraryAdapter.GetPrefHelper().GetBranchKey());
+            BranchRequestHelper.AddCommonParams(this.postData, LibraryAdapter.GetPrefHelper().GetBranchKey());
         }
 
         public async Task<BranchRequestResponse> RunAsync() {
