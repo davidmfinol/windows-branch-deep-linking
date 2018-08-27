@@ -1,7 +1,11 @@
 ﻿using BranchSdk.Enum;
+using BranchSdk.Utils;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Core;
 
 namespace BranchSdk {
     public class BranchUniversalObject {
@@ -14,7 +18,7 @@ namespace BranchSdk {
         public ContentIndexModes ContentIndexMode { get; private set; }
         public ContentIndexModes LocalIndexMode { get; private set; }
         public List<string> Keywords { get; private set; }
-        public DateTime? ExpirationDate { get; private set; }
+        public long CreationTimeStamp { get; private set; }
 
         public enum ContentIndexModes {
             PUBLIC,
@@ -31,7 +35,22 @@ namespace BranchSdk {
             ContentIndexMode = 0;
             LocalIndexMode = 0;
             Keywords = new List<string>();
-            ExpirationDate = null;
+            CreationTimeStamp = DateTime.UtcNow.CurrentTimeMillis();
+        }
+
+        public BranchUniversalObject(string json) {
+            CanonicalIdentifier = "";
+            CanonicalUrl = "";
+            Title = "";
+            ContentDescription = "";
+            ImageUrl = "";
+            Metadata = new BranchContentMetadata();
+            ContentIndexMode = 0;
+            LocalIndexMode = 0;
+            Keywords = new List<string>();
+            CreationTimeStamp = DateTime.UtcNow.CurrentTimeMillis();
+
+            LoadFromJson(json);
         }
 
         public BranchUniversalObject SetCanonicalIdentifier(string canonicalIdentifier) {
@@ -95,13 +114,17 @@ namespace BranchSdk {
             return this;
         }
 
-        public BranchUniversalObject SetContentExpiration(DateTime expirationDate) {
-            ExpirationDate = expirationDate;
-            return this;
-        }
-
         public string GetShortURL(BranchLinkProperties linkProperties) {
             return GetLinkBuilder(linkProperties).GetUrl();
+        }
+
+        public void ShowShareSheet(DataTransferManager dataTransferManager, CoreDispatcher dispatcher, BranchLinkProperties linkProperties, BranchShareSheetStyle style) {
+            BranchShareLinkBuilder shareLinkBuilder = new BranchShareLinkBuilder(dataTransferManager, dispatcher, GetLinkBuilder(linkProperties));
+            shareLinkBuilder.SetTitle(style.GetMessageTitle());
+            shareLinkBuilder.SetMessage(style.GetMessageBody());
+            shareLinkBuilder.SetDefaultURL(style.GetDefaultUrl());
+            shareLinkBuilder.SetBitmap(style.GetBitmap());
+            shareLinkBuilder.ShareLink();
         }
 
         private BranchShortLinkBuilder GetLinkBuilder(BranchLinkProperties linkProperties) {
@@ -151,8 +174,6 @@ namespace BranchSdk {
                 shortLinkBuilder.AddParameters(BranchJsonKey.ContentImgUrl.GetKey(), ImageUrl);
             }
 
-            //todo
-            //shortLinkBuilder.AddParameters(BranchJsonKey.ContentExpiryTime.GetKey(), "" + ExpirationDate);
             shortLinkBuilder.AddParameters(BranchJsonKey.PublicallyIndexable.GetKey(), "" + IsPublicallyIndexable());
 
             JObject metadataJson = Metadata.ConvertToJson();
@@ -170,6 +191,7 @@ namespace BranchSdk {
         public bool IsPublicallyIndexable() {
             return ContentIndexMode == ContentIndexModes.PRIVATE;
         }
+
         public bool IsLocallyIndexable() {
             return LocalIndexMode == ContentIndexModes.PUBLIC;
         }
@@ -181,6 +203,7 @@ namespace BranchSdk {
                 foreach(JProperty key in metadataJsonObject.Properties()) {
                     buoJsonModel.Add(key.Name, key.Value);
                 }
+
                 if (!string.IsNullOrEmpty(Title)) {
                     buoJsonModel.Add(BranchJsonKey.ContentTitle.GetKey(), Title);
                 }
@@ -190,6 +213,13 @@ namespace BranchSdk {
                 if (!string.IsNullOrEmpty(CanonicalUrl)) {
                     buoJsonModel.Add(BranchJsonKey.CanonicalUrl.GetKey(), CanonicalUrl);
                 }
+                if (!string.IsNullOrEmpty(ContentDescription)) {
+                    buoJsonModel.Add(BranchJsonKey.ContentDesc.GetKey(), ContentDescription);
+                }
+                if (!string.IsNullOrEmpty(ImageUrl)) {
+                    buoJsonModel.Add(BranchJsonKey.ContentImgUrl.GetKey(), ImageUrl);
+                }
+
                 if (Keywords.Count > 0) {
                     JArray keyWordJsonArray = new JArray();
                     foreach (string keyword in Keywords) {
@@ -197,23 +227,59 @@ namespace BranchSdk {
                     }
                     buoJsonModel.Add(BranchJsonKey.ContentKeyWords.GetKey(), keyWordJsonArray);
                 }
-                if (!string.IsNullOrEmpty(ContentDescription)) {
-                    buoJsonModel.Add(BranchJsonKey.ContentDesc.GetKey(), ContentDescription);
-                }
-                if (!string.IsNullOrEmpty(ImageUrl)) {
-                    buoJsonModel.Add(BranchJsonKey.ContentImgUrl.GetKey(), ImageUrl);
-                }
-                //todo
-                //if (expirationInMilliSec_ > 0) {
-                //    buoJsonModel.put(Defines.Jsonkey.ContentExpiryTime.getKey(), expirationInMilliSec_);
-                //}
+
                 buoJsonModel.Add(BranchJsonKey.PublicallyIndexable.GetKey(), IsPublicallyIndexable());
                 buoJsonModel.Add(BranchJsonKey.LocallyIndexable.GetKey(), IsLocallyIndexable());
-                //buoJsonModel.Add(BranchJsonKey.CreationTimestamp.GetKey(), creationTimeStamp_);
-
+                buoJsonModel.Add(BranchJsonKey.CreationTimestamp.GetKey(), CreationTimeStamp);
             } catch (Exception ignore) {
             }
             return buoJsonModel;
+        }
+
+        private void LoadFromJson(string json) {
+            if (string.IsNullOrEmpty(json))
+                return;
+
+            JObject jsonObject = JObject.Parse(json);
+            if (jsonObject.ContainsKey(BranchJsonKey.Clicked_Branch_Link.GetKey())
+                && jsonObject[BranchJsonKey.Clicked_Branch_Link.GetKey()].Value<bool>()) {
+
+                Metadata = new BranchContentMetadata(json);
+
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentTitle.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentTitle.GetKey()].Value<string>())) {
+                    SetTitle(jsonObject[BranchJsonKey.ContentTitle.GetKey()].Value<string>());
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalIdentifier.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].Value<string>())) {
+                    SetCanonicalIdentifier(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].Value<string>());
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].Value<string>())) {
+                    SetCanonicalUrl(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].Value<string>());
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentDesc.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentDesc.GetKey()].Value<string>())) {
+                    SetContentDescription(jsonObject[BranchJsonKey.ContentDesc.GetKey()].Value<string>());
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentImgUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].Value<string>())) {
+                    SetContentImageUrl(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].Value<string>());
+                }
+
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentKeyWords.GetKey()) && jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].ToObject<List<string>>() != null) {
+                    Keywords = jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].ToObject<List<string>>();
+                }
+
+                if (jsonObject.ContainsKey(BranchJsonKey.PublicallyIndexable.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.PublicallyIndexable.GetKey()].Value<string>())) {
+                    if (jsonObject[BranchJsonKey.PublicallyIndexable.GetKey()].Value<bool>()) {
+                        ContentIndexMode = ContentIndexModes.PRIVATE;
+                    }
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.LocallyIndexable.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<string>())) {
+                    if (jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<bool>()) {
+                        LocalIndexMode = ContentIndexModes.PUBLIC;
+                    }
+                }
+                if (jsonObject.ContainsKey(BranchJsonKey.CreationTimestamp.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CreationTimestamp.GetKey()].Value<string>())) {
+                    CreationTimeStamp = jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<long>();
+                }
+            }
         }
     }
 }

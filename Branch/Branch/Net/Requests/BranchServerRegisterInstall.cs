@@ -1,6 +1,7 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Diagnostics;
 
 namespace BranchSdk.Net.Requests {
@@ -60,6 +61,22 @@ namespace BranchSdk.Net.Requests {
             base.OnFailed(errorMessage, statusCode);
 
             if (callback != null) callback.Invoke(null, errorMessage);
+        }
+
+        public override bool PrepareExecuteWithoutTracking() {
+            if (PostData == null) return false;
+
+            try {
+                PostData.Remove(BranchJsonKey.DeviceFingerprintID.GetKey());
+                PostData.Remove(BranchJsonKey.HardwareID.GetKey());
+                PostData.Remove(BranchJsonKey.IsHardwareIDReal.GetKey());
+                PostData.Remove(BranchJsonKey.LocalIP.GetKey());
+                PostData.Remove(BranchJsonKey.Metadata.GetKey());
+                PostData.Add(BranchJsonKey.TrackingDisable.GetKey(), true);
+            } catch (Exception ignore) {
+                return false;
+            }
+            return true;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace BranchSdk {
     public interface IBranchPrefHelper {
@@ -15,6 +16,12 @@ namespace BranchSdk {
         int GetIsReferrable();
         int GetCreditCount();
         int GetCreditCount(string bucket);
+        int GetNetworkTimeout();
+        int GetMaxRetries();
+        int GetRetryInterval();
+        JObject GetRequestMetadata();
+        bool GetTrackingDisable();
+        JObject GetBranchAnalyticsData();
         void SetBranchKey(string branchKey);
         void SetDeviceFingerPrintId(string deviceFingerPrintId);
         void SetIdentity(string identity);
@@ -30,6 +37,13 @@ namespace BranchSdk {
         void SetActionUniqueCount(string action, int count);
         void ClearIsReferrable();
         void SetIsReferrable();
+        void SetNetworkTimeout(int timeout);
+        void SetMaxRetries(int maxRetries);
+        void SetRetryInterval(int retryInterval);
+        void SetRequestMetadata(string key, string value);
+        void SetTrackingDisable(bool value);
+        void ClearBranchAnalyticsData();
+        void SaveBranchAnalyticsData(JObject analyticsData);
         Task LoadAll();
         Task SaveAll();
         bool IsLoaded { get; }

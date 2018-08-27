@@ -63,52 +63,11 @@ namespace BranchSdk.Net.Requests {
             }
 
             BranchRequestHelper.AddCommonParams(this.postData, LibraryAdapter.GetPrefHelper().GetBranchKey());
+            BranchRequestHelper.UpdateRequestMetadata(this.postData);
         }
 
         public async Task<BranchRequestResponse> RunAsync() {
-            try {
-                HttpClient httpClient = new HttpClient();
-                var headers = httpClient.DefaultRequestHeaders;
-
-                if (RequestType == RequestTypes.GET) {
-                    Uri requestUri = new Uri(BranchServerRequestQueue.GetUriWithParameters(RequestUrl(), Parameters));
-                    HttpResponseMessage httpResponse = new HttpResponseMessage();
-                    string httpResponseBody = "";
-
-                    httpResponse = await httpClient.GetAsync(requestUri);
-                    httpResponseBody = await httpResponse.Content.ReadAsStringAsync();
-
-                    if (httpResponse.IsSuccessStatusCode) {
-                        string responseAsText = await httpResponse.Content.ReadAsStringAsync();
-                        return new BranchRequestResponse(responseAsText, string.Empty);
-                    } else {
-                        string rawError = await httpResponse.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Request Error: " + rawError);
-                        return new BranchRequestResponse(string.Empty, rawError);
-                    }
-                } else if (RequestType == RequestTypes.POST) {
-                    Uri requestUri = new Uri(RequestUrl());
-                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("utf-8"));
-
-                    HttpContent content = new StringContent(PostData.ToString(), Encoding.UTF8, "application/json");
-                    HttpResponseMessage httpResponse = await httpClient.PostAsync(requestUri, content);
-
-                    Debug.WriteLine("Post data: " + PostData);
-
-                    if (httpResponse.IsSuccessStatusCode) {
-                        string responseAsText = await httpResponse.Content.ReadAsStringAsync();
-                        return new BranchRequestResponse(responseAsText, string.Empty);
-                    } else {
-                        string rawError = await httpResponse.Content.ReadAsStringAsync();
-                        Debug.WriteLine("Request Error: " + rawError);
-                        return new BranchRequestResponse(string.Empty, rawError);
-                    }
-                }
-            } catch (Exception e) {
-                Debug.WriteLine("Error: " + e.Message + " - " + e.StackTrace);
-            }
-            return null;
+            return await BranchServerRequestQueue.HandleRequest(this);
         }
 
         public virtual void OnSuccess(string responseAsText) {
@@ -117,6 +76,10 @@ namespace BranchSdk.Net.Requests {
 
         public virtual void OnFailed(string errorMessage, int statusCode) {
             Debug.WriteLine("Error request, error: " + errorMessage);
+        }
+
+        public virtual bool PrepareExecuteWithoutTracking() {
+            return false;
         }
 
         protected void UpdateEnvironment(JObject post) {

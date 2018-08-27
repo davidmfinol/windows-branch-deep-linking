@@ -1,5 +1,14 @@
 Branch Windows SDK change log
 
+- 0.0.4
+  * Adding SetDebug method
+  * Adding DisableTracking method
+  * Adding SetRequestMetadata method
+  * Adding SetNetworkTimeout method
+  * Adding SetMaxRetries method
+  * Adding SetRetryInterval method
+  * Adding link sharing and native view for sharing
+
 - 0.0.3
   * Adding reward/credits features
 

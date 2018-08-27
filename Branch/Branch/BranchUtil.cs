@@ -2,6 +2,8 @@
 
 namespace BranchSdk {
     public static class BranchUtil {
+        public static bool IsCustomDebugEnabled = false;
+
         public static JObject FormatLinkParam(JObject parameters) {
             return AddSource(parameters);
         }

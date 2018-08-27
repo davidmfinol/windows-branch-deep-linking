@@ -7,8 +7,10 @@ using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
 using Windows.UI.Text;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics;
 using System.Text;
+using Windows.UI.Core;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,19 +27,40 @@ namespace TestbedWindows
             Main();
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e) {
+            DeepLinkHandler.OnAppDeepLinkEvent += OnDeepLinkOpened;
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e) {
+            DeepLinkHandler.OnAppDeepLinkEvent -= OnDeepLinkOpened;
+        }
+
+        private void OnDeepLinkOpened(string url) {
+            Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
+                List<string> lines = new List<string>();
+                lines.Add("Init session, parameters: ");
+                foreach (string key in parameters.Keys) {
+                    lines.Add(key + " - " + parameters[key]);
+                }
+                await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => {
+                    AddLog(lines);
+                });
+            }), url);
+        }
+
         public void Main() {
             Task.Run(async () => {
+                await BranchConfigManager.LoadAll();
                 await LibraryAdapter.GetPrefHelper().LoadAll();
-                Debug.WriteLine("Setup test branch key");
-                LibraryAdapter.GetPrefHelper().SetBranchKey("key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs");
 
+                Branch.GetTestInstance();
                 Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
                     List<string> lines = new List<string>();
                     lines.Add("Init session, parameters: ");
                     foreach (string key in parameters.Keys) {
                         lines.Add(key + " - " + parameters[key]);
                     }
-                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => {
                         AddLog(lines);
                     });
                 }));
@@ -72,7 +95,6 @@ namespace TestbedWindows
                    .SetTitle("My Content Title")
                    .SetContentDescription("my_product_description1")
                    .SetContentImageUrl("https://example.com/mycontent-12345.png")
-                   .SetContentExpiration(DateTime.UtcNow)
                    .SetContentImageUrl("https://test_img_url")
                    .AddKeyWord("My_Keyword1")
                    .AddKeyWord("My_Keyword2")
@@ -163,6 +185,35 @@ namespace TestbedWindows
                     AddLog(lines);
                 });
             });
+        }
+
+        private void OnShareClicked(object sender, RoutedEventArgs e) {
+            BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
+                   .SetCanonicalIdentifier("item/12345")
+                   .SetCanonicalUrl("https://branch.io/deepviews")
+                   .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
+                   .SetLocalIndexMode(BranchUniversalObject.ContentIndexModes.PUBLIC)
+                   .SetTitle("My Content Title")
+                   .SetContentDescription("my_product_description1")
+                   .SetContentImageUrl("https://example.com/mycontent-12345.png")
+                   .SetContentImageUrl("https://test_img_url")
+                   .AddKeyWord("My_Keyword1")
+                   .AddKeyWord("My_Keyword2")
+                   .SetContentMetadata(
+                        new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
+                   );
+
+            BranchLinkProperties linkProperties = new BranchLinkProperties()
+                     .AddTag("Tag1")
+                     .SetChannel("Sharing_Channel_name")
+                     .SetFeature("my_feature_name")
+                     .AddControlParameter("$android_deeplink_path", "custom/path/*")
+                     .AddControlParameter("$ios_url", "http://example.com/ios")
+                     .SetDuration(100);
+
+            BranchShareSheetStyle style = new BranchShareSheetStyle("Test share title", "Test share message body");
+            style.SetDefaultUrl("https://branch.io/");
+            branchUniversalObject.ShowShareSheet(DataTransferManager.GetForCurrentView(), Dispatcher, linkProperties, style);
         }
 
         private void AddLog(string text) {

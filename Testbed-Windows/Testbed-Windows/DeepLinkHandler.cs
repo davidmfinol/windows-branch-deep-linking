@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace UwpTestBed {
+namespace TestbedWindows {
     public static class DeepLinkHandler {
         public static event Action<string> OnAppDeepLinkEvent = delegate { };
 

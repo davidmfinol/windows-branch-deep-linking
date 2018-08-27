@@ -7,6 +7,7 @@ using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace BranchSdk {
     //TODO: It should be extracted into a separate uwp library
@@ -26,7 +27,13 @@ namespace BranchSdk {
             Actions,
             TotalBase,
             UniqueBase,
-            IsReferrable
+            IsReferrable,
+            NetworkTimeout,
+            MaxRetries,
+            RetryInterval,
+            RequestMetadata,
+            TrackingDisabled,
+            AnalyticsData
         }
 
         private Dictionary<PrefKeyType, string> PrefKeyMap = new Dictionary<PrefKeyType, string>() {
@@ -45,7 +52,17 @@ namespace BranchSdk {
             { PrefKeyType.TotalBase, "branch_total_base_" },
             { PrefKeyType.UniqueBase, "branch_balance_base_" },
             { PrefKeyType.IsReferrable, "branch_is_referrable" },
+            { PrefKeyType.NetworkTimeout, "branch_network_timeout" },
+            { PrefKeyType.MaxRetries, "branch_max_retries" },
+            { PrefKeyType.RetryInterval, "branch_retry_interval" },
+            { PrefKeyType.RequestMetadata, "branch_request_metadata" },
+            { PrefKeyType.TrackingDisabled, "branch_tracking_disabled" },
+            { PrefKeyType.AnalyticsData, "branch_analytics_data" },
         };
+
+        private const string RETRY_INTERVAL = "1000";
+        private const string MAX_RETRIES = "3"; 
+        private const string NETWORK_TIMEOUT = "5500"; 
 
         private string sessionId;
         private string identity;
@@ -60,6 +77,12 @@ namespace BranchSdk {
         private Dictionary<string, int> creditCounts = new Dictionary<string, int>();
         private Dictionary<string, int> actionsTotalBase = new Dictionary<string, int>();
         private Dictionary<string, int> actionsUniqueBase = new Dictionary<string, int>();
+        private int networkTimeout;
+        private int maxRetries;
+        private int retryInterval;
+        private JObject requestMetadata;
+        private bool trackingDisabled;
+        private JObject analyticsData;
 
         private bool isLoaded = false;
 
@@ -116,6 +139,32 @@ namespace BranchSdk {
                 return creditCounts[bucket];
             }
             return 0;
+        }
+
+        public int GetNetworkTimeout() {
+            return networkTimeout;
+        }
+
+        public int GetMaxRetries() {
+            return maxRetries;
+        }
+
+        public int GetRetryInterval() {
+            return retryInterval;
+        }
+
+        public JObject GetRequestMetadata() {
+            if (requestMetadata == null) requestMetadata = new JObject();
+            return requestMetadata;
+        }
+
+        public bool GetTrackingDisable() {
+            return trackingDisabled;
+        }
+
+        public JObject GetBranchAnalyticsData() {
+            if (analyticsData == null) analyticsData = new JObject();
+            return analyticsData;
         }
 
         public void SetSessionId(string sessionId) {
@@ -186,10 +235,62 @@ namespace BranchSdk {
             }
         }
 
+        public void SetNetworkTimeout(int networkTimeout) {
+            this.networkTimeout = networkTimeout;
+        }
+
+        public void SetMaxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+        }
+
+        public void SetRetryInterval(int retryInterval) {
+            this.retryInterval = retryInterval;
+        }
+
+        public void SetRequestMetadata(string key, string value) {
+            if (string.IsNullOrEmpty(key)) return;
+            if (requestMetadata == null) requestMetadata = new JObject();
+
+            if (requestMetadata.ContainsKey(key) && value == null) {
+                requestMetadata.Remove(key);
+            }
+
+            requestMetadata.Add(key, value);
+        }
+
         public void ClearUserValues() {
             creditCounts = new Dictionary<string, int>();
             actionsTotalBase = new Dictionary<string, int>();
             actionsUniqueBase = new Dictionary<string, int>();
+        }
+
+        public void SetTrackingDisable(bool value) {
+            trackingDisabled = value;
+        }
+
+        public void ClearBranchAnalyticsData() {
+            analyticsData = new JObject();
+        }
+
+        public void SaveBranchAnalyticsData(JObject analyticsData) {
+            string sessionID = GetSessionId();
+            if (!string.IsNullOrEmpty(sessionID)) {
+                if (analyticsData == null) {
+                    analyticsData = GetBranchAnalyticsData();
+                }
+                try {
+                    JArray viewDataArray;
+                    if (analyticsData.ContainsKey(sessionID)) {
+                        viewDataArray = analyticsData[sessionID].Value<JArray>();
+
+                    } else {
+                        viewDataArray = new JArray();
+                        analyticsData.Add(sessionID, viewDataArray);
+                    }
+                    viewDataArray.Add(analyticsData);
+                } catch (Exception ignore) {
+                }
+            }
         }
 
         public async Task LoadAll() {
@@ -220,6 +321,7 @@ namespace BranchSdk {
                     Debug.WriteLine(e.StackTrace);
                 }
             }
+
             string actionsUniqueBase = await Load(PrefKeyType.UniqueBase, string.Empty);
             if (!string.IsNullOrEmpty(actionsUniqueBase)) {
                 try {
@@ -227,6 +329,26 @@ namespace BranchSdk {
                 } catch (Exception e) {
                     Debug.WriteLine(e.StackTrace);
                 }
+            }
+
+            int.TryParse(await Load(PrefKeyType.NetworkTimeout, NETWORK_TIMEOUT), out networkTimeout);
+            int.TryParse(await Load(PrefKeyType.MaxRetries, MAX_RETRIES), out maxRetries);
+            int.TryParse(await Load(PrefKeyType.RetryInterval, RETRY_INTERVAL), out retryInterval);
+
+            string requestMetadata = await Load(PrefKeyType.RequestMetadata, string.Empty);
+            if (!string.IsNullOrEmpty(requestMetadata)) {
+                this.requestMetadata = JObject.Parse(requestMetadata);
+            } else {
+                this.requestMetadata = new JObject();
+            }
+
+            bool.TryParse(await Load(PrefKeyType.TrackingDisabled, "false"), out trackingDisabled);
+            
+            string analyticsData = await Load(PrefKeyType.AnalyticsData, string.Empty);
+            if (!string.IsNullOrEmpty(analyticsData)) {
+                this.analyticsData = JObject.Parse(analyticsData);
+            } else {
+                this.analyticsData = new JObject();
             }
 
             isLoaded = true;
@@ -248,6 +370,12 @@ namespace BranchSdk {
             await Save(PrefKeyType.CreditBase, JsonConvert.SerializeObject(this.creditCounts));
             await Save(PrefKeyType.TotalBase, JsonConvert.SerializeObject(this.actionsTotalBase));
             await Save(PrefKeyType.UniqueBase, JsonConvert.SerializeObject(this.actionsUniqueBase));
+            await Save(PrefKeyType.NetworkTimeout, networkTimeout.ToString());
+            await Save(PrefKeyType.MaxRetries, maxRetries.ToString());
+            await Save(PrefKeyType.RetryInterval, retryInterval.ToString());
+            await Save(PrefKeyType.RequestMetadata, requestMetadata.ToString());
+            await Save(PrefKeyType.TrackingDisabled, trackingDisabled.ToString());
+            await Save(PrefKeyType.AnalyticsData, analyticsData.ToString());
         }
 
         public bool IsLoaded {

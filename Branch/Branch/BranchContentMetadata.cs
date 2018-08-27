@@ -27,8 +27,8 @@ namespace BranchSdk {
         public double Latitude { get; set; }
         public double Longitude { get; set; }
 
-        private readonly List<string> imageCaptions;
-        private readonly Dictionary<string, string> customMetadata;
+        private List<string> imageCaptions;
+        private Dictionary<string, string> customMetadata;
 
         public List<string> ImageCaptions {
             get {
@@ -45,6 +45,13 @@ namespace BranchSdk {
         public BranchContentMetadata() {
             imageCaptions = new List<string>();
             customMetadata = new Dictionary<string, string>();
+        }
+
+        public BranchContentMetadata(string json) {
+            imageCaptions = new List<string>();
+            customMetadata = new Dictionary<string, string>();
+
+            LoadFromJson(json);
         }
 
         public BranchContentMetadata(List<string> imageCaptions, Dictionary<string, string> customMetadata) {
@@ -133,15 +140,86 @@ namespace BranchSdk {
 
             if (customMetadata.Count > 0) {
                 foreach (string customDataKey in customMetadata.Keys) {
-                    metadataJson.Add(customDataKey, customMetadata[customDataKey]);
+                    metadataJson.Add(string.Format("{0}{1}", "~cd_", customDataKey), customMetadata[customDataKey]);
                 }
             }
 
             return metadataJson;
         }
 
-        public static BranchContentMetadata CreateFromJson(string json) {
-            return JsonConvert.DeserializeObject<BranchContentMetadata>(json);
+        private void LoadFromJson(string json) {
+            if (string.IsNullOrEmpty(json))
+                return;
+
+            JObject jsonObject = JObject.Parse(json);
+
+            if (jsonObject.ContainsKey(BranchJsonKey.ContentSchema.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentSchema.GetKey()].Value<string>())) {
+                if(System.Enum.TryParse(jsonObject[BranchJsonKey.ContentSchema.GetKey()].Value<string>(), out BranchContentSchema contentSchema)) {
+                    ContentSchema = contentSchema;
+                }
+            }
+            if (jsonObject.ContainsKey(BranchJsonKey.PriceCurrency.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.PriceCurrency.GetKey()].Value<string>())) {
+                if (System.Enum.TryParse(jsonObject[BranchJsonKey.PriceCurrency.GetKey()].Value<string>(), out BranchCurrencyType currencyType)) {
+                    CurrencyType = currencyType;
+                }
+            }
+            if (jsonObject.ContainsKey(BranchJsonKey.ProductCategory.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ProductCategory.GetKey()].Value<string>())) {
+                if (System.Enum.TryParse(jsonObject[BranchJsonKey.ProductCategory.GetKey()].Value<string>(), out BranchProductCategory productCategory)) {
+                    ProductCategory = productCategory;
+                }
+            }
+            if (jsonObject.ContainsKey(BranchJsonKey.Condition.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Condition.GetKey()].Value<string>())) {
+                if (System.Enum.TryParse(jsonObject[BranchJsonKey.Condition.GetKey()].Value<string>(), out BranchCondition condition)) {
+                    Condition = condition;
+                }
+            }
+
+            if (jsonObject.ContainsKey(BranchJsonKey.Quantity.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Quantity.GetKey()].Value<string>()))
+                Quantity = jsonObject[BranchJsonKey.Quantity.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.Price.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Price.GetKey()].Value<string>()))
+                Price = jsonObject[BranchJsonKey.Price.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.SKU.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.SKU.GetKey()].Value<string>()))
+                Sku = jsonObject[BranchJsonKey.SKU.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.ProductName.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ProductName.GetKey()].Value<string>()))
+                ProductName = jsonObject[BranchJsonKey.ProductName.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.ProductBrand.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ProductBrand.GetKey()].Value<string>()))
+                ProductBrand = jsonObject[BranchJsonKey.ProductBrand.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.ProductVariant.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ProductVariant.GetKey()].Value<string>()))
+                ProductVariant = jsonObject[BranchJsonKey.ProductVariant.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.Rating.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Rating.GetKey()].Value<string>()))
+                Rating = jsonObject[BranchJsonKey.Rating.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.RatingAverage.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.RatingAverage.GetKey()].Value<string>()))
+                RatingAverage = jsonObject[BranchJsonKey.RatingAverage.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.RatingCount.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.RatingCount.GetKey()].Value<string>()))
+                RatingCount = jsonObject[BranchJsonKey.RatingCount.GetKey()].Value<int>();
+            if (jsonObject.ContainsKey(BranchJsonKey.RatingMax.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.RatingMax.GetKey()].Value<string>()))
+                RatingMax = jsonObject[BranchJsonKey.RatingMax.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.AddressStreet.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.AddressStreet.GetKey()].Value<string>()))
+                AddressStreet = jsonObject[BranchJsonKey.AddressStreet.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.AddressCity.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.AddressCity.GetKey()].Value<string>()))
+                AddressCity = jsonObject[BranchJsonKey.AddressCity.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.AddressRegion.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.AddressRegion.GetKey()].Value<string>()))
+                AddressRegion = jsonObject[BranchJsonKey.AddressRegion.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.AddressCountry.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.AddressCountry.GetKey()].Value<string>()))
+                AddressCountry = jsonObject[BranchJsonKey.AddressCountry.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.AddressPostalCode.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.AddressPostalCode.GetKey()].Value<string>()))
+                AddressPostalCode = jsonObject[BranchJsonKey.AddressPostalCode.GetKey()].Value<string>();
+            if (jsonObject.ContainsKey(BranchJsonKey.Latitude.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Latitude.GetKey()].Value<string>()))
+                Latitude = jsonObject[BranchJsonKey.Latitude.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.Longitude.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Longitude.GetKey()].Value<string>()))
+                Longitude = jsonObject[BranchJsonKey.Longitude.GetKey()].Value<double>();
+            if (jsonObject.ContainsKey(BranchJsonKey.Longitude.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.Longitude.GetKey()].Value<string>()))
+                Longitude = jsonObject[BranchJsonKey.Longitude.GetKey()].Value<double>();
+
+            if (jsonObject.ContainsKey(BranchJsonKey.ImageCaptions.GetKey()) && jsonObject[BranchJsonKey.ImageCaptions.GetKey()].ToObject<List<string>>() != null) {
+                imageCaptions = jsonObject[BranchJsonKey.ImageCaptions.GetKey()].ToObject<List<string>>();
+            }
+
+            foreach (JProperty prop in jsonObject.Properties()) {
+                if (prop.Name.StartsWith("~cd_")) {
+                    customMetadata.Add(prop.Name.Replace("~cd_", ""), prop.Value<string>());
+                }
+            }
         }
     }
 }

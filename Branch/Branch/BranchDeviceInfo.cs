@@ -1,6 +1,7 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace BranchSdk {
     public static class BranchDeviceInfo {
@@ -11,7 +12,11 @@ namespace BranchSdk {
         private static string hardwareId;
         private static bool isRealHardwareId;
 
+        public static bool IsInit { get; private set; }
+
         public static void Init() {
+            IsInit = true;
+
             os = LibraryAdapter.GetSystemObserver().GetOS();
             osVersion = LibraryAdapter.GetSystemObserver().GetOSVersion();
             localIp = LibraryAdapter.GetSystemObserver().GetLocalIp();

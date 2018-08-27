@@ -39,7 +39,9 @@ namespace BranchSdk.Net.Requests {
             Debug.WriteLine("CREATE URL REQUEST RESPONSE >>>>>");
             base.OnSuccess(responseAsText);
 
-            if (callback != null) callback.Invoke("asvdasdv", null);
+            JObject resp = JObject.Parse(responseAsText);
+
+            if (callback != null) callback.Invoke(resp["url"].Value<string>(), null);
         }
 
         public override void OnFailed(string errorMessage, int statusCode) {

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BranchSdk</RootNamespace>
-    <AssemblyName>branch_debug_0.0.3</AssemblyName>
+    <AssemblyName>branch_debug_0.0.4</AssemblyName>
     <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17134.0</TargetPlatformVersion>
@@ -107,14 +107,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Branch.cs" />
+    <Compile Include="BranchConfigManager.cs" />
     <Compile Include="BranchContentMetadata.cs" />
     <Compile Include="BranchDeviceInfo.cs" />
     <Compile Include="BranchError.cs" />
     <Compile Include="BranchEvent.cs" />
     <Compile Include="BranchLinkProperties.cs" />
     <Compile Include="BranchPrefHelper.cs" />
+    <Compile Include="BranchShareLinkBuilder.cs" />
+    <Compile Include="BranchShareLinkManager.cs" />
+    <Compile Include="BranchShareSheetStyle.cs" />
     <Compile Include="BranchShortLinkBuilder.cs" />
     <Compile Include="BranchSystemObserver.cs" />
+    <Compile Include="BranchTrackingController.cs" />
     <Compile Include="BranchUniversalObject.cs" />
     <Compile Include="BranchUrlBuilder.cs" />
     <Compile Include="BranchUtil.cs" />
@@ -144,6 +149,7 @@
     <Compile Include="Net\Requests\BranchServerRequest.cs" />
     <Compile Include="Net\Requests\BranchTestRequest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\DateTimeExtensions.cs" />
     <EmbeddedResource Include="Properties\UwpBranchSdk.rd.xml" />
   </ItemGroup>
   <ItemGroup>

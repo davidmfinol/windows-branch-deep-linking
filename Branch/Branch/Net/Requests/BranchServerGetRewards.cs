@@ -43,7 +43,7 @@ namespace BranchSdk.Net.Requests {
         }
 
         public override void OnFailed(string errorMessage, int statusCode) {
-            if (callback != null) callback.Invoke(false, new BranchError("Trouble retrieving user credits. " + errorMessage, statusCode));
+            if (callback != null) callback.Invoke(false, new BranchError("Trouble retrieving user credits." + errorMessage, statusCode));
         }
     }
 }

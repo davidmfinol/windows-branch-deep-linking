@@ -1,4 +1,5 @@
-﻿using BranchSdk.Net.Requests;
+﻿using BranchSdk.CrossPlatform;
+using BranchSdk.Net.Requests;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,58 +28,165 @@ namespace BranchSdk.Net {
 
             queue.RemoveRange(0, runningQueue.Count);
 
-            Task.Run(() => { TaskWorkingAsync(); });
+            Task.Run(() => { TaskWorking(); });
             return true;
         }
 
-        private static async void TaskWorkingAsync() {
+        public static void ClearPendingRequests() {
+            queue.Clear();
+        }
+
+        private static void TaskWorking() {
             while (runningQueue.Count > 0) {
                 BranchServerRequest request = runningQueue.Dequeue();
+                HandleRequest(request);
+            }
+        }
 
-                try {
-                    HttpClient httpClient = new HttpClient();
-                    var headers = httpClient.DefaultRequestHeaders;
+        private static async Task<BranchRequestResponse> HandleFailRequestGet(BranchServerRequest request, Uri requestUri, HttpClient client, HttpResponseMessage httpResponse) {
+            string rawError = await httpResponse.Content.ReadAsStringAsync();
 
-                    if (request.RequestType == RequestTypes.GET) {
-                        Uri requestUri = new Uri(GetUriWithParameters(request.RequestUrl(), request.Parameters));
-                        HttpResponseMessage httpResponse = new HttpResponseMessage();
-                        string httpResponseBody = "";
+            if (LibraryAdapter.GetPrefHelper().GetMaxRetries() < 1) {
+                request.OnFailed(rawError, (int)httpResponse.StatusCode);
+                Debug.WriteLine("Request Error: " + rawError);
+                return new BranchRequestResponse(string.Empty, rawError);
+            }
 
-                        httpResponse = await httpClient.GetAsync(requestUri);
-                        httpResponseBody = await httpResponse.Content.ReadAsStringAsync();
+            for (int i = 0; i < LibraryAdapter.GetPrefHelper().GetMaxRetries(); i++) {
+                httpResponse = await client.GetAsync(requestUri);
 
-                        Debug.WriteLine("Get request: " + GetUriWithParameters(request.RequestUrl(), request.Parameters));
+                if ((int)httpResponse.StatusCode >= 500) {
+                    Debug.WriteLine("Failed request, retry: " + i);
 
+                    await Task.Delay(LibraryAdapter.GetPrefHelper().GetRetryInterval());
+                    continue;
+                } else {
+                    if (httpResponse.IsSuccessStatusCode) {
+                        Debug.WriteLine("Success request, retry: " + i);
+
+                        string responseAsText = await httpResponse.Content.ReadAsStringAsync();
+                        request.OnSuccess(responseAsText);
+
+                        return new BranchRequestResponse(responseAsText, string.Empty);
+                    } else {
+                        rawError = await httpResponse.Content.ReadAsStringAsync();
+                        request.OnFailed(rawError, (int)httpResponse.StatusCode);
+                        Debug.WriteLine("Request Error: " + rawError);
+
+                        return new BranchRequestResponse(string.Empty, rawError);
+                    }
+                }
+            }
+
+            return new BranchRequestResponse(string.Empty, rawError);
+        }
+
+        private static async Task<BranchRequestResponse> HandleFailRequestPost(BranchServerRequest request, Uri requestUri, HttpClient client, HttpResponseMessage httpResponse, HttpContent content) {
+            string rawError = await httpResponse.Content.ReadAsStringAsync();
+
+            if (LibraryAdapter.GetPrefHelper().GetMaxRetries() < 1) {
+                request.OnFailed(rawError, (int)httpResponse.StatusCode);
+                Debug.WriteLine("Request Error: " + rawError);
+                return new BranchRequestResponse(string.Empty, rawError);
+            }
+
+            for (int i = 0; i < LibraryAdapter.GetPrefHelper().GetMaxRetries(); i++) {
+                httpResponse = await client.PostAsync(requestUri, content);
+
+                if ((int)httpResponse.StatusCode >= 500) {
+                    Debug.WriteLine("Failed request, retry: " + i);
+
+                    await Task.Delay(LibraryAdapter.GetPrefHelper().GetRetryInterval());
+                    continue;
+                } else {
+                    if (httpResponse.IsSuccessStatusCode) {
+                        Debug.WriteLine("Success request, retry: " + i);
+
+                        string responseAsText = await httpResponse.Content.ReadAsStringAsync();
+                        request.OnSuccess(responseAsText);
+
+                        return new BranchRequestResponse(responseAsText, string.Empty);
+                    } else {
+                        rawError = await httpResponse.Content.ReadAsStringAsync();
+                        request.OnFailed(rawError, (int)httpResponse.StatusCode);
+                        Debug.WriteLine("Request Error: " + rawError);
+
+                        return new BranchRequestResponse(string.Empty, rawError);
+                    }
+                }
+            }
+
+            return new BranchRequestResponse(string.Empty, rawError);
+        }
+
+        public static async Task<BranchRequestResponse> HandleRequest(BranchServerRequest request) {
+            //if tracking disabled and request doesnt support execute without tracking properties
+            if (BranchTrackingController.TrackingDisabled && !request.PrepareExecuteWithoutTracking()) {
+                BranchError error = new BranchError(string.Empty, BranchError.ERR_BRANCH_TRACKING_DISABLED);
+                request.OnFailed(string.Empty, error.GetErrorCode());
+                return new BranchRequestResponse(string.Empty, error.GetMessage());
+            }
+
+            try {
+                HttpClient httpClient = new HttpClient();
+                var headers = httpClient.DefaultRequestHeaders;
+                httpClient.Timeout = TimeSpan.FromSeconds(LibraryAdapter.GetPrefHelper().GetNetworkTimeout());
+
+                if (request.RequestType == RequestTypes.GET) {
+                    Uri requestUri = new Uri(GetUriWithParameters(request.RequestUrl(), request.Parameters));
+                    HttpResponseMessage httpResponse = new HttpResponseMessage();
+
+                    httpResponse = await httpClient.GetAsync(requestUri);
+
+                    Debug.WriteLine("Get request: " + GetUriWithParameters(request.RequestUrl(), request.Parameters));
+
+                    if ((int)httpResponse.StatusCode >= 500) {
+                        Debug.WriteLine("Failed request, retrying...");
+
+                        return await HandleFailRequestGet(request, requestUri, httpClient, httpResponse);
+                    } else {
                         if (httpResponse.IsSuccessStatusCode) {
                             string responseAsText = await httpResponse.Content.ReadAsStringAsync();
                             request.OnSuccess(responseAsText);
+                            return new BranchRequestResponse(responseAsText, string.Empty);
                         } else {
                             string rawError = await httpResponse.Content.ReadAsStringAsync();
                             request.OnFailed(rawError, (int)httpResponse.StatusCode);
                             Debug.WriteLine("Request Error: " + rawError);
+                            return new BranchRequestResponse(string.Empty, rawError);
                         }
-                    } else if (request.RequestType == RequestTypes.POST) {
-                        Uri requestUri = new Uri(request.RequestUrl());
-                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("utf-8"));
+                    }
+                } else {
+                    Uri requestUri = new Uri(request.RequestUrl());
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("utf-8"));
 
-                        HttpContent content = new StringContent(request.PostData.ToString(), Encoding.UTF8, "application/json");
-                        HttpResponseMessage httpResponse = await httpClient.PostAsync(requestUri, content);
+                    HttpContent content = new StringContent(request.PostData.ToString(), Encoding.UTF8, "application/json");
+                    HttpResponseMessage httpResponse = await httpClient.PostAsync(requestUri, content);
 
-                        Debug.WriteLine("Post request: " + request.RequestUrl());
-                        Debug.WriteLine("Post data: " + request.PostData);
+                    Debug.WriteLine("Post request: " + request.RequestUrl());
+                    Debug.WriteLine("Post data: " + request.PostData);
 
+                    if ((int)httpResponse.StatusCode >= 500) {
+                        Debug.WriteLine("Failed request, retrying...");
+
+                        return await HandleFailRequestPost(request, requestUri, httpClient, httpResponse, content);
+                    } else {
                         if (httpResponse.IsSuccessStatusCode) {
                             string responseAsText = await httpResponse.Content.ReadAsStringAsync();
                             request.OnSuccess(responseAsText);
+                            return new BranchRequestResponse(responseAsText, string.Empty);
                         } else {
                             string rawError = await httpResponse.Content.ReadAsStringAsync();
+                            request.OnFailed(rawError, (int)httpResponse.StatusCode);
                             Debug.WriteLine("Request Error: " + rawError);
+                            return new BranchRequestResponse(string.Empty, rawError);
                         }
                     }
-                } catch (Exception e) {
-                    Debug.WriteLine("Error: " + e.Message + " - " + e.StackTrace);
                 }
+            } catch (Exception e) {
+                Debug.WriteLine("sdk request error: " + e.Message + " - " + e.StackTrace);
+                return new BranchRequestResponse(string.Empty, "sdk request error: " + e.Message + " - " + e.StackTrace);
             }
         }
 

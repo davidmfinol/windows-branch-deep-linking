@@ -4,6 +4,7 @@ using BranchSdk.Net.Requests;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,27 @@ namespace BranchSdk.Net {
             postData.Add(BranchJsonKey.BranchKey.GetKey(), LibraryAdapter.GetPrefHelper().GetBranchKey());
         }
 
+        public static void UpdateRequestMetadata(JObject data) {
+            try {
+                JObject metadata = new JObject();
+                foreach(JProperty prop in LibraryAdapter.GetPrefHelper().GetRequestMetadata().Properties()) {
+                    metadata.Add(prop.Name, prop.Value);
+                }
+
+                JObject originalMetadata = null;
+                if (data.ContainsKey(BranchJsonKey.Metadata.GetKey())) originalMetadata = data[BranchJsonKey.Metadata.GetKey()].Value<JObject>();
+
+                if (originalMetadata != null) {
+                    foreach (JProperty prop in originalMetadata.Properties()) {
+                        metadata.Add(prop.Name, prop.Value);
+                    }
+                }
+                data.Add(BranchJsonKey.Metadata.GetKey(), metadata);
+            } catch (Exception ignore) {
+                Debug.WriteLine("Could not merge metadata, ignoring user metadata.");
+            }
+        }
+
         private static string ConvertJSONtoString(JObject json) {
             StringBuilder result = new StringBuilder();
             if (json != null) {
@@ -33,7 +55,13 @@ namespace BranchSdk.Net {
                         result.Append("&");
                     }
 
-                    result.Append(prop.Name).Append("=").Append(json[prop.Name].Value<string>());
+                    if (json[prop.Name].Type == JTokenType.Array) {
+                        result.Append(prop.Name).Append("=").Append(json[prop.Name].Value<JArray>().ToString());
+                    } else if (json[prop.Name].Type == JTokenType.Object) {
+                        result.Append(prop.Name).Append("=").Append(json[prop.Name].Value<JObject>().ToString());
+                    } else {
+                        result.Append(prop.Name).Append("=").Append(json[prop.Name].Value<string>());
+                    }
                 }
             }
 

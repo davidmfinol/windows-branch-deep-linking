@@ -1,6 +1,7 @@
 ﻿using BranchSdk.Net;
 using BranchSdk.Net.Requests;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -46,6 +47,14 @@ namespace BranchSdk {
             request.RequestType = RequestTypes.POST;
             shortUrl = Branch.I.GenerateShortLinkInternal(request);
             return shortUrl;
+        }
+
+        public virtual void GetUrlWithCallback(Action<string> callback) {
+            BranchServerCreateUrl request = new BranchServerCreateUrl(alias, type, duration, tags, channel, feature, stage, campaign, BranchUtil.FormatLinkParam(parameters), (url, error) => {
+                callback.Invoke(url);
+            });
+            request.RequestType = RequestTypes.POST;
+            Branch.I.GenerateShortLinkInternalWithCallback(request);
         }
     }
 }
