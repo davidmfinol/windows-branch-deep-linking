@@ -19,6 +19,9 @@ namespace BranchSdk.Net {
         }
 
         public static void AddCommonParams(JObject postData, string branchKey) {
+            if(!postData.ContainsKey(BranchJsonKey.UserData.GetKey())) {
+                postData.Add(BranchJsonKey.SDK.GetKey(), string.Format("{0}{1}", "windows", Utils.AssemblyUtils.Version.ToString(3)));
+            }
             postData.Add(BranchJsonKey.BranchKey.GetKey(), LibraryAdapter.GetPrefHelper().GetBranchKey());
         }
 

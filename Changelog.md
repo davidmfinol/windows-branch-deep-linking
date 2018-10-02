@@ -1,5 +1,8 @@
 Branch Windows SDK change log
 
+- 0.0.5
+  * Adding "sdk" and "sdk_version" fields in requests
+
 - 0.0.4
   * Adding SetDebug method
   * Adding DisableTracking method

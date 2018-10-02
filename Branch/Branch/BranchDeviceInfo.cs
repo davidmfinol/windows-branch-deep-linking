@@ -34,6 +34,8 @@ namespace BranchSdk {
             if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), osVersion);
             if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), localIp);
             if (!string.IsNullOrEmpty(devIdentity)) requestObj.Add(BranchJsonKey.DeveloperIdentity.GetKey(), devIdentity);
+            requestObj.Add(BranchJsonKey.SDK.GetKey(), "windows");
+            requestObj.Add(BranchJsonKey.SdkVersion.GetKey(), Utils.AssemblyUtils.Version.ToString(3));
         }
 
         public static void UpdateRequestWithDeviceParams(JObject requestObj) {

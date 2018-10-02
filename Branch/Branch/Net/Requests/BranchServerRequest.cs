@@ -59,7 +59,7 @@ namespace BranchSdk.Net.Requests {
                 BranchDeviceInfo.UpdateRequestWithUserData(userData);
                 this.postData.Add(BranchJsonKey.UserData.GetKey(), userData);
             } else {
-                BranchDeviceInfo.UpdateRequestWithUserData(this.postData);
+                BranchDeviceInfo.UpdateRequestWithDeviceParams(this.postData);
             }
 
             BranchRequestHelper.AddCommonParams(this.postData, LibraryAdapter.GetPrefHelper().GetBranchKey());
