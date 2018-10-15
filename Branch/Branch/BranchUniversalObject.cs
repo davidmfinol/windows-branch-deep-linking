@@ -1,11 +1,12 @@
 ﻿using BranchSdk.Enum;
 using BranchSdk.Utils;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Core;
+using COMWrapper;
 
 namespace BranchSdk {
     public class BranchUniversalObject {
@@ -114,6 +115,16 @@ namespace BranchSdk {
             return this;
         }
 
+        public void SetCreationTimeStamp(long timestamp)
+        {
+            CreationTimeStamp = timestamp;
+        }
+
+        public void SetKeywords(List<string> keywords)
+        {
+            Keywords = keywords;
+        }
+
         public string GetShortURL(BranchLinkProperties linkProperties) {
             return GetLinkBuilder(linkProperties).GetUrl();
         }
@@ -174,11 +185,11 @@ namespace BranchSdk {
                 shortLinkBuilder.AddParameters(BranchJsonKey.ContentImgUrl.GetKey(), ImageUrl);
             }
 
-            shortLinkBuilder.AddParameters(BranchJsonKey.PublicallyIndexable.GetKey(), "" + IsPublicallyIndexable());
+            shortLinkBuilder.AddParameters(BranchJsonKey.PublicallyIndexable.GetKey(), IsPublicallyIndexable());
 
-            JObject metadataJson = Metadata.ConvertToJson();
-            foreach (JProperty prop in metadataJson.Properties()) {
-                shortLinkBuilder.AddParameters(prop.Name, (string)prop.Value);
+            Dictionary<string, object> metadata = Metadata.ConvertToDictionary();
+            foreach (string key in metadata.Keys) {
+                shortLinkBuilder.AddParameters(key, metadata[key]);
             }
 
             Dictionary<string, string> controlParam = linkProperties.ControlParams;
@@ -196,41 +207,41 @@ namespace BranchSdk {
             return LocalIndexMode == ContentIndexModes.PUBLIC;
         }
 
-        public JObject ConvertToJson() {
-            JObject buoJsonModel = new JObject();
+        public JsonObject ConvertToJson() {
+            JsonObject buoJsonModel = new JsonObject();
             try {
-                JObject metadataJsonObject = Metadata.ConvertToJson();
-                foreach(JProperty key in metadataJsonObject.Properties()) {
-                    buoJsonModel.Add(key.Name, key.Value);
+                JsonObject metadataJsonObject = Metadata.ConvertToJson();
+                foreach(string key in metadataJsonObject.Keys) {
+                    buoJsonModel.Add(key, metadataJsonObject[key]);
                 }
 
                 if (!string.IsNullOrEmpty(Title)) {
-                    buoJsonModel.Add(BranchJsonKey.ContentTitle.GetKey(), Title);
+                    buoJsonModel.Add(BranchJsonKey.ContentTitle.GetKey(), JsonValue.CreateStringValue(Title));
                 }
                 if (!string.IsNullOrEmpty(CanonicalIdentifier)) {
-                    buoJsonModel.Add(BranchJsonKey.CanonicalIdentifier.GetKey(), CanonicalIdentifier);
+                    buoJsonModel.Add(BranchJsonKey.CanonicalIdentifier.GetKey(), JsonValue.CreateStringValue(CanonicalIdentifier));
                 }
                 if (!string.IsNullOrEmpty(CanonicalUrl)) {
-                    buoJsonModel.Add(BranchJsonKey.CanonicalUrl.GetKey(), CanonicalUrl);
+                    buoJsonModel.Add(BranchJsonKey.CanonicalUrl.GetKey(), JsonValue.CreateStringValue(CanonicalUrl));
                 }
                 if (!string.IsNullOrEmpty(ContentDescription)) {
-                    buoJsonModel.Add(BranchJsonKey.ContentDesc.GetKey(), ContentDescription);
+                    buoJsonModel.Add(BranchJsonKey.ContentDesc.GetKey(), JsonValue.CreateStringValue(ContentDescription));
                 }
                 if (!string.IsNullOrEmpty(ImageUrl)) {
-                    buoJsonModel.Add(BranchJsonKey.ContentImgUrl.GetKey(), ImageUrl);
+                    buoJsonModel.Add(BranchJsonKey.ContentImgUrl.GetKey(), JsonValue.CreateStringValue(ImageUrl));
                 }
 
                 if (Keywords.Count > 0) {
-                    JArray keyWordJsonArray = new JArray();
+                    JsonArray keyWordJsonArray = new JsonArray();
                     foreach (string keyword in Keywords) {
-                        keyWordJsonArray.Add(keyword);
+                        keyWordJsonArray.Add(JsonValue.CreateStringValue(keyword));
                     }
                     buoJsonModel.Add(BranchJsonKey.ContentKeyWords.GetKey(), keyWordJsonArray);
                 }
 
-                buoJsonModel.Add(BranchJsonKey.PublicallyIndexable.GetKey(), IsPublicallyIndexable());
-                buoJsonModel.Add(BranchJsonKey.LocallyIndexable.GetKey(), IsLocallyIndexable());
-                buoJsonModel.Add(BranchJsonKey.CreationTimestamp.GetKey(), CreationTimeStamp);
+                buoJsonModel.Add(BranchJsonKey.PublicallyIndexable.GetKey(), JsonValue.CreateBooleanValue(IsPublicallyIndexable()));
+                buoJsonModel.Add(BranchJsonKey.LocallyIndexable.GetKey(), JsonValue.CreateBooleanValue(IsLocallyIndexable()));
+                buoJsonModel.Add(BranchJsonKey.CreationTimestamp.GetKey(), JsonValue.CreateNumberValue(CreationTimeStamp));
             } catch (Exception ignore) {
             }
             return buoJsonModel;
@@ -240,46 +251,62 @@ namespace BranchSdk {
             if (string.IsNullOrEmpty(json))
                 return;
 
-            JObject jsonObject = JObject.Parse(json);
+            JsonObject jsonObject = JsonObject.Parse(json);
             if (jsonObject.ContainsKey(BranchJsonKey.Clicked_Branch_Link.GetKey())
-                && jsonObject[BranchJsonKey.Clicked_Branch_Link.GetKey()].Value<bool>()) {
+                && jsonObject[BranchJsonKey.Clicked_Branch_Link.GetKey()].GetBoolean()) {
 
                 Metadata = new BranchContentMetadata(json);
 
-                if (jsonObject.ContainsKey(BranchJsonKey.ContentTitle.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentTitle.GetKey()].Value<string>())) {
-                    SetTitle(jsonObject[BranchJsonKey.ContentTitle.GetKey()].Value<string>());
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentTitle.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentTitle.GetKey()].GetString())) {
+                    SetTitle(jsonObject[BranchJsonKey.ContentTitle.GetKey()].GetString());
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalIdentifier.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].Value<string>())) {
-                    SetCanonicalIdentifier(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].Value<string>());
+                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalIdentifier.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].GetString())) {
+                    SetCanonicalIdentifier(jsonObject[BranchJsonKey.CanonicalIdentifier.GetKey()].GetString());
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].Value<string>())) {
-                    SetCanonicalUrl(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].Value<string>());
+                if (jsonObject.ContainsKey(BranchJsonKey.CanonicalUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].GetString())) {
+                    SetCanonicalUrl(jsonObject[BranchJsonKey.CanonicalUrl.GetKey()].GetString());
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.ContentDesc.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentDesc.GetKey()].Value<string>())) {
-                    SetContentDescription(jsonObject[BranchJsonKey.ContentDesc.GetKey()].Value<string>());
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentDesc.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentDesc.GetKey()].GetString())) {
+                    SetContentDescription(jsonObject[BranchJsonKey.ContentDesc.GetKey()].GetString());
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.ContentImgUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].Value<string>())) {
-                    SetContentImageUrl(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].Value<string>());
-                }
-
-                if (jsonObject.ContainsKey(BranchJsonKey.ContentKeyWords.GetKey()) && jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].ToObject<List<string>>() != null) {
-                    Keywords = jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].ToObject<List<string>>();
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentImgUrl.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].GetString())) {
+                    SetContentImageUrl(jsonObject[BranchJsonKey.ContentImgUrl.GetKey()].GetString());
                 }
 
-                if (jsonObject.ContainsKey(BranchJsonKey.PublicallyIndexable.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.PublicallyIndexable.GetKey()].Value<string>())) {
-                    if (jsonObject[BranchJsonKey.PublicallyIndexable.GetKey()].Value<bool>()) {
+                if (jsonObject.ContainsKey(BranchJsonKey.ContentKeyWords.GetKey()) && jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].GetArray().DeserializeObject<List<string>>() != null) {
+                    Keywords = jsonObject[BranchJsonKey.ContentKeyWords.GetKey()].GetArray().DeserializeObject<List<string>>();
+                }
+
+                if (jsonObject.ContainsKey(BranchJsonKey.PublicallyIndexable.GetKey())) {
+                    if (jsonObject[BranchJsonKey.PublicallyIndexable.GetKey()].GetBoolean()) {
                         ContentIndexMode = ContentIndexModes.PRIVATE;
                     }
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.LocallyIndexable.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<string>())) {
-                    if (jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<bool>()) {
+                if (jsonObject.ContainsKey(BranchJsonKey.LocallyIndexable.GetKey())) {
+                    if (jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].GetBoolean()) {
                         LocalIndexMode = ContentIndexModes.PUBLIC;
                     }
                 }
-                if (jsonObject.ContainsKey(BranchJsonKey.CreationTimestamp.GetKey()) && !string.IsNullOrEmpty(jsonObject[BranchJsonKey.CreationTimestamp.GetKey()].Value<string>())) {
-                    CreationTimeStamp = jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].Value<long>();
+                if (jsonObject.ContainsKey(BranchJsonKey.CreationTimestamp.GetKey())) {
+                    CreationTimeStamp = (long)jsonObject[BranchJsonKey.LocallyIndexable.GetKey()].GetNumber();
                 }
             }
+        }
+
+        public ICOMBranchUniversalObject ParseNativeBUO()
+        {
+            ICOMBranchUniversalObject comBUO = new COMBranchUniversalObject();
+            comBUO.CanonicalIdentifier = CanonicalIdentifier;
+            comBUO.CanonicalUrl = CanonicalUrl;
+            comBUO.Title = Title;
+            comBUO.ContentDescription = ContentDescription;
+            comBUO.ImageUrl = ImageUrl;
+            comBUO.Metadata = Metadata.ParseNativeMetadata();
+            comBUO.ContentIndexMode = ContentIndexMode.ToString();
+            comBUO.LocalIndexMode = LocalIndexMode.ToString();
+            comBUO.CreationTimeStamp = CreationTimeStamp;
+            comBUO.Keywords = Keywords;
+            return comBUO;
         }
     }
 }

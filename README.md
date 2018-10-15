@@ -1,6 +1,6 @@
 
 
-# Branch Metrics Android SDK
+# Branch Metrics Windows SDK
 
 ## Technical Documentation
 
@@ -603,6 +603,7 @@ The response will return an array that has been parsed from the following JSON:
         ]
 ```
 
+
 **referrer**
 : The id of the referring user for this credit transaction. Returns null if no referrer is involved. Note this id is the user id in developer's own system that's previously passed to Branch's identify user API call.
 
@@ -616,6 +617,7 @@ The response will return an array that has been parsed from the following JSON:
 1. _1_ - A reward that was added manually
 2. _2_ - A redemption of credits that occurred through our API or SDKs
 3. _3_ - This is a very unique case where we will subtract credits automatically when we detect fraud
+
 
 #### Link sharing
 You can share your generated link with that method:
@@ -648,6 +650,8 @@ BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
             style.SetDefaultUrl("https://branch.io/");
             branchUniversalObject.ShowShareSheet(DataTransferManager.GetForCurrentView(), Dispatcher, linkProperties, style);
 ```
+```
+
 **BranchShareSheetStyle**
 This class is need for customize "Link sharing"
 * Its constructor takes two arguments `title` and `message`
@@ -655,3 +659,268 @@ This class is need for customize "Link sharing"
 * Method `SetBitmap` set image for your share
 
 #####!!! `DataTransferManager.GetForCurrentView()` and `Dispatcher` should be called from main thread !!!#####
+
+
+## Branch Metrics Windows COM
+1. [**Introduction**](#1---introduction)
+  + [Creating project](#creating-project)
+  + [Setup COM Branch Library](#setup-com-branch-library)
+
+2. [**Using of COM Library**](#2---using-of-com-library)
+  + [Initialize COM](#initialize-com)
+  + [COM Branch class](#com-branch-class)
+  + [Using of COM Branch objects](#using-of-com-branch-objects)
+  + [Using of COM Branch callbacks](#using-of-com-branch-callbacks)
+  + [Example full code](#example-full-code)
+
+## 1 - Introduction
+
+### Creating project
+1. Start Microsoft Visual Studio
+2. On the **File** menu, point to  
+    **New**, and then click **Project**. The **New Project** dialog box opens.
+3. Under **Installed**, click **Visual C++**.  
+4. Click **Windows Console Application**.
+
+
+### Setup COM Branch Library
+
+ 1. Build solution
+ 2. Copy COM Library from
+**..\BranchWindowsSdk\DLLs\Debug\branch_debug_0.0.6.tlb** or 
+**..\BranchWindowsSdk\DLLs\Release\branch_0.0.6.tlb** to 
+**..\Your Project Folder\Your Project Name\Debug** or 
+**..\Your Project Folder\Your Project Name\Release**
+ 3. Import library 
+```cpp
+#import "..\Your Project Name\Debug\branch_debug_0.0.6.tlb" 
+using namespace branch_debug_0_0_6;
+```
+or
+```cpp
+#import "..\Your Project Name\Debug\branch_0.0.6.tlb" 
+using namespace branch_0_0_6;
+```
+ 4. Include ```<thread>``` 
+```cpp
+#include <thread>
+```
+ _
+
+## 2 - Using of COM Library
+
+### Initialize COM
+To initialize the use of a COM, paste this code into your main class.
+```cpp
+int main()
+{
+	HRESULT hr = CoInitialize(NULL);
+	//In next your code will be here
+	CoUninitialize();
+}
+```
+### COM Branch class
+To create COM Branch class use this:
+```cpp
+ICOMBranchPtr comBranch(__uuidof(COMBranch));
+```
+Next call ``GetBranchInstance`` and ``SetNetworkTimeout()`` methods
+```cpp
+comBranch->GetBranchInstance(false, "your branch key");
+comBranch->SetNetworkTimeout(3000);
+```
+COM Branch Methods:
+
+ - void GetBranchInstance(bool isLive, string key);
+ - void EnableTestMode();
+ - void SetDebug(bool isDebug);
+ - void DisableTracking(bool disableTracking);
+ - bool IsTrackingDisabled();
+ - void SetNetworkTimeout(int timeout);
+ - void SetMaxRetries(maxRetries);
+ - void SetRetryInterval(int retryInterval);
+ - void SetRequestMetadata(string key, string value);
+ - void EnableSimulateInstall();
+ - void DisableSimulateInstall();
+ - string GetFirstParams();
+ - string GetSessionParams();
+ - void SetIdentity(string userID, void* callback);
+ - void Logout(void* callback);
+ - void RedeemRewards(int count);
+ - void RedeemRewards(int count, void* callback);
+ - void RedeemRewards(string bucket, int count);
+ - void RedeemRewards(string bucket, int count, void* callback);
+ - void UserCompletedAction(string action, string metadata);
+ - void UserCompletedAction(string action);
+ - void UserCompletedAction(string action, void* callback);
+ - void UserCompletedAction(string action, string metadata, void* callback);
+ - void CancelShareLinkDialog();
+ - void GetCreditHistory(void* callback);
+ - void GetCreditHistory(string afterID, int length, string order, void* callback);
+ - void GetCreditHistory(string bucket, string afterID, int length, string order, void* callback);
+ - int GetCredits();
+ - void InitSession(string linkUrl = "", bool autoInitSession = false);
+ - void InitSession(bool isReferrable, string linkUrl = "");
+ - void InitSession(void* callback, string linkUrl = "");
+ - void InitSession(bool isReferrable, void* callback, string linkUrl = "");
+     
+### Using of COM Branch objects
+#### Branch Content Metadata
+```cpp
+ICOMBranchContentMetadataPtr comMetadata(__uuidof(COMBranchContentMetadata));
+```
+#### Branch Universal Object
+```cpp
+ICOMBranchUniversalObjectPtr comBUO(__uuidof(COMBranchUniversalObject));
+```
+#### Branch Link Properties
+```cpp
+ICOMBranchLinkPropertiesPtr comLinkProperties(__uuidof(COMBranchLinkProperties));
+```
+#### Example of use objects:
+```cpp
+ICOMBranchContentMetadataPtr comMetadata(__uuidof(COMBranchContentMetadata));
+comMetadata->AddCustomMetadata("testkey", "testvalue");
+
+ICOMBranchUniversalObjectPtr comBUO(__uuidof(COMBranchUniversalObject));
+comBUO->CanonicalIdentifier = "item/12345";
+comBUO->CanonicalUrl = "";
+comBUO->ContentIndexMode = "PRIVATE";
+comBUO->LocalIndexMode = "PUBLIC";
+comBUO->Title = "My Content Title";
+comBUO->ContentDescription = "my_product_description1";
+comBUO->ImageUrl = "https://example.com/mycontent-12345.png";
+comBUO->AddKeyword("My_Keyword1");
+comBUO->AddKeyword("My_Keyword2");
+
+ICOMBranchLinkPropertiesPtr comLinkProperties(__uuidof(COMBranchLinkProperties));
+comLinkProperties->AddTag("Tag1");
+comLinkProperties->Channel = "Sharing_Channel_name";
+comLinkProperties->Feature = "my_feature_name";
+comLinkProperties->AddControlParam("$android_deeplink_path", "custom/path/*");
+comLinkProperties->AddControlParam("$ios_url", "http://example.com/ios");
+comLinkProperties->MatchDuration = 100;
+```
+### Using of COM Branch callbacks
+
+#### COM Delegates
+
+ - Init session delegate
+```cpp
+   void (ICOMBranchUniversalObject buo, ICOMBranchLinkProperties link, string error);
+```
+ - Get Reward History delegate
+```cpp
+   void (string json, string error);
+```
+ - Get Rewards delegate
+```cpp
+   void (bool changed, string error);
+```
+ - Logout delegate
+```cpp
+   void (bool logoutSuccess, string error);
+```
+ - Redeem Rewards delegate
+```cpp
+   void (bool changed, string error);
+```
+ - Identity user delegate
+```cpp
+   void (string referrinParams, string error);
+```
+ - User Completed Action delegate
+```cpp
+   void ();
+```
+
+#### Using of callback example
+
+```cpp
+void __stdcall InitCallback(
+	ICOMBranchUniversalObjectPtr comBUO,
+	ICOMBranchLinkPropertiesPtr comLinkProperties,
+	_bstr_t error) {
+	//your code here
+}
+
+int main()
+{
+	HRESULT hr = CoInitialize(NULL);
+	ICOMBranchPtr comBranch(__uuidof(COMBranch));
+	comBranch->GetBranchInstance(false,"your branch key");
+	comBranch->SetNetworkTimeout(3000);
+	comBranch->InitSession_3(&InitCallback, "");
+	CoUninitialize();
+}
+```
+### Example full code
+```cpp
+#include "pch.h"
+#include <iostream>
+#include <thread>
+#import "..\Testbed-Windows-COM\Debug\branch_debug_0.0.6.tlb" 
+
+using namespace branch_debug_0_0_4;
+
+bool sessionInited = false;
+
+void __stdcall InitCallback(ICOMBranchUniversalObjectPtr comBUO,
+	ICOMBranchLinkPropertiesPtr comLinkProperties,
+	_bstr_t error) {
+	std::cout << "init session callback :) \n\r";
+	std::cout << "title link: " + comBUO->Title + "\n\r";
+	std::cout << "channel link: " + comLinkProperties->Channel + "\n\r";
+
+	sessionInited = true;
+}
+
+void init(ICOMBranchPtr comBranch, ICOMBranchUniversalObjectPtr buo, ICOMBranchLinkPropertiesPtr link)
+{
+	comBranch->InitSession_3(&InitCallback, "");
+	std::cout << "init session \n\r";
+
+	while (!sessionInited) Sleep(10);
+
+	_bstr_t linkStr = buo->GetShortURL(link);
+	std::cout << "generated link: " + linkStr + " \n\r";
+}
+
+int main()
+{
+	HRESULT hr = CoInitialize(NULL);
+
+	ICOMBranchContentMetadataPtr comMetadata(__uuidof(COMBranchContentMetadata));
+	comMetadata->AddCustomMetadata("testkey", "testvalue");
+
+	ICOMBranchUniversalObjectPtr comBUO(__uuidof(COMBranchUniversalObject));
+	comBUO->CanonicalIdentifier = "item/12345";
+	comBUO->CanonicalUrl = "";
+	comBUO->ContentIndexMode = "PRIVATE";
+	comBUO->LocalIndexMode = "PUBLIC";
+	comBUO->Title = "My Content Title";
+	comBUO->ContentDescription = "my_product_description1";
+	comBUO->ImageUrl = "https://example.com/mycontent-12345.png";
+	comBUO->AddKeyword("My_Keyword1");
+	comBUO->AddKeyword("My_Keyword2");
+
+	ICOMBranchLinkPropertiesPtr comLinkProperties(__uuidof(COMBranchLinkProperties));
+	comLinkProperties->AddTag("Tag1");
+	comLinkProperties->Channel = "Sharing_Channel_name";
+	comLinkProperties->Feature = "my_feature_name";
+	comLinkProperties->AddControlParam("$android_deeplink_path", "custom/path/*");
+	comLinkProperties->AddControlParam("$ios_url", "http://example.com/ios");
+	comLinkProperties->MatchDuration = 100;
+
+	ICOMBranchPtr comBranch(__uuidof(COMBranch));
+	comBranch->GetBranchInstance(false, "key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs");
+	comBranch->SetNetworkTimeout(3000);
+
+	std::thread t1(init, comBranch, comBUO, comLinkProperties);
+	t1.join();
+
+	CoUninitialize();
+}
+```
+___
+

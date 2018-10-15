@@ -1,6 +1,6 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Diagnostics;
 
@@ -12,12 +12,12 @@ namespace BranchSdk.Net.Requests {
             this.callback = callback;
             this.requestPath = Enum.RequestPath.Logout.GetPath();
 
-            JObject post = new JObject();
-            post.Add(BranchJsonKey.IdentityID.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentityId());
-            post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId());
-            post.Add(BranchJsonKey.SessionID.GetKey(), LibraryAdapter.GetPrefHelper().GetSessionId());
+            JsonObject post = new JsonObject();
+            post.Add(BranchJsonKey.IdentityID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentityId()));
+            post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId()));
+            post.Add(BranchJsonKey.SessionID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetSessionId()));
             if (!string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetLinkClickId())) {
-                post.Add(BranchJsonKey.LinkClickID.GetKey(), LibraryAdapter.GetPrefHelper().GetLinkClickId());
+                post.Add(BranchJsonKey.LinkClickID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetLinkClickId()));
             }
 
             SetPost(post);
@@ -28,11 +28,11 @@ namespace BranchSdk.Net.Requests {
                 Debug.WriteLine("LOGOUT RESPONSE >>>>>");
                 base.OnSuccess(responseAsText);
 
-                JObject resp = JObject.Parse(responseAsText);
+                JsonObject resp = JsonObject.Parse(responseAsText);
 
-                LibraryAdapter.GetPrefHelper().SetSessionId(resp[BranchJsonKey.SessionID.GetKey()].Value<string>());
-                LibraryAdapter.GetPrefHelper().SetIdentityId(resp[BranchJsonKey.IdentityID.GetKey()].Value<string>());
-                LibraryAdapter.GetPrefHelper().SetUserUrl(resp[BranchJsonKey.Link.GetKey()].Value<string>());
+                LibraryAdapter.GetPrefHelper().SetSessionId(resp[BranchJsonKey.SessionID.GetKey()].GetString());
+                LibraryAdapter.GetPrefHelper().SetIdentityId(resp[BranchJsonKey.IdentityID.GetKey()].GetString());
+                LibraryAdapter.GetPrefHelper().SetUserUrl(resp[BranchJsonKey.Link.GetKey()].GetString());
 
                 LibraryAdapter.GetPrefHelper().SetInstallParams(string.Empty);
                 LibraryAdapter.GetPrefHelper().SetSessionParams(string.Empty);

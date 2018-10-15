@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,13 +18,13 @@ namespace BranchSdk {
         private CoreDispatcher dispatcher;
         private DataTransferManager dataTransferManager;
 
-        public BranchShareLinkBuilder(DataTransferManager dataTransferManager, CoreDispatcher dispatcher, JObject parameters) {
+        public BranchShareLinkBuilder(DataTransferManager dataTransferManager, CoreDispatcher dispatcher, JsonObject parameters) {
             this.shortLinkBuilder = new BranchShortLinkBuilder();
             this.dispatcher = dispatcher;
             this.dataTransferManager = dataTransferManager;
 
-            foreach (JProperty prop in parameters.Properties()) {
-                shortLinkBuilder.AddParameters(prop.Name, prop.Value);
+            foreach (string key in parameters.Keys) {
+                shortLinkBuilder.AddParameters(key, parameters[key]);
             }
 
             messageTitle = string.Empty;

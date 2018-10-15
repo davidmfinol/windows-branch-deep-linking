@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BranchSdk</RootNamespace>
-    <AssemblyName>branch_debug_0.0.4</AssemblyName>
+    <AssemblyName>branch_debug_0.0.6</AssemblyName>
     <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17134.0</TargetPlatformVersion>
@@ -26,6 +26,7 @@
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,6 +36,7 @@
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>2</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -123,6 +125,15 @@
     <Compile Include="BranchUniversalObject.cs" />
     <Compile Include="BranchUrlBuilder.cs" />
     <Compile Include="BranchUtil.cs" />
+    <Compile Include="COMWrapper\COMBranch.cs" />
+    <Compile Include="COMWrapper\COMBranchContentMetadata.cs" />
+    <Compile Include="COMWrapper\COMBranchLinkProperties.cs" />
+    <Compile Include="COMWrapper\COMBranchUniversalObject.cs" />
+    <Compile Include="COMWrapper\COMTestCallback.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchLinkProperties.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranch.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchContentMetadata.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchUniversalObject.cs" />
     <Compile Include="CrossPlatform\LibraryAdapter.cs" />
     <Compile Include="Enum\BranchCondition.cs" />
     <Compile Include="Enum\BranchContentSchema.cs" />
@@ -133,6 +144,7 @@
     <Compile Include="Enum\BranchStandartEvent.cs" />
     <Compile Include="Interface\IBranchPrefHelper.cs" />
     <Compile Include="Interface\IBranchSystemObserver.cs" />
+    <Compile Include="JsonUtility\JsonUtility.cs" />
     <Compile Include="Net\BranchRequestHelper.cs" />
     <Compile Include="Net\BranchServerRequestQueue.cs" />
     <Compile Include="Net\Requests\BranchRequestResponse.cs" />
@@ -151,18 +163,25 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\AssemblyUtils.cs" />
     <Compile Include="Utils\DateTimeExtensions.cs" />
+    <Compile Include="Utils\ObjectExtensions.cs" />
     <EmbeddedResource Include="Properties\UwpBranchSdk.rd.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.1.7</Version>
+      <Version>6.1.5</Version>
     </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
-    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="branch.snk" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>branch.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,5 +1,5 @@
 ﻿using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,12 +11,12 @@ namespace BranchSdk.Net.Requests {
     public class BranchServerLogEvent : BranchServerRequest {
         public override BranchApiVersions ApiVersion => BranchApiVersions.V2; 
 
-        public BranchServerLogEvent(string requestPath, string eventName, bool isStandartEvent, List<BranchUniversalObject> buoList, JObject standartProperties, JObject customProperties) {
+        public BranchServerLogEvent(string requestPath, string eventName, bool isStandartEvent, List<BranchUniversalObject> buoList, JsonObject standartProperties, JsonObject customProperties) {
             this.requestPath = requestPath;
 
-            JObject post = new JObject();
+            JsonObject post = new JsonObject();
             try {
-                post.Add(BranchJsonKey.Name.GetKey(), eventName);
+                post.Add(BranchJsonKey.Name.GetKey(), JsonValue.CreateStringValue(eventName));
                 if (customProperties.Count > 0) {
                     post.Add(BranchJsonKey.CustomData.GetKey(), customProperties);
                 }
@@ -25,7 +25,7 @@ namespace BranchSdk.Net.Requests {
                     post.Add(BranchJsonKey.EventData.GetKey(), standartProperties);
                 }
                 if (isStandartEvent && buoList.Count > 0) {
-                    JArray contentItemsArray = new JArray();
+                    JsonArray contentItemsArray = new JsonArray();
                     post.Add(BranchJsonKey.ContentItems.GetKey(), contentItemsArray);
                     foreach (BranchUniversalObject buo in buoList) {
                         contentItemsArray.Add(buo.ConvertToJson());

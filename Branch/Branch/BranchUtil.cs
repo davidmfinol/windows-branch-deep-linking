@@ -1,18 +1,22 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Windows.Data.Json;
 
-namespace BranchSdk {
-    public static class BranchUtil {
+namespace BranchSdk
+{
+    public static class BranchUtil
+    {
         public static bool IsCustomDebugEnabled = false;
 
-        public static JObject FormatLinkParam(JObject parameters) {
+        public static JsonObject FormatLinkParam(JsonObject parameters)
+        {
             return AddSource(parameters);
         }
 
-        public static JObject AddSource(JObject parameters) {
+        public static JsonObject AddSource(JsonObject parameters)
+        {
             if (parameters == null) {
-                parameters = new JObject();
+                parameters = new JsonObject();
             }
-            parameters.Add("source", "windows"); //TODO: It's temp value
+            parameters.Add("source", JsonValue.CreateStringValue("windows")); //TODO: It's temp value
             return parameters;
         }
     }

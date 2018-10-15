@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Windows.Data.Json;
 using System;
 
 namespace BranchSdk {
     public class BranchShortLinkBuilder : BranchUrlBuilder<BranchShortLinkBuilder> {
-        public BranchShortLinkBuilder SetAlias(String alias) {
+        public BranchShortLinkBuilder SetAlias(string alias) {
             this.alias = alias;
             return this;
         }
 
-        public BranchShortLinkBuilder SetChannel(String channel) {
+        public BranchShortLinkBuilder SetChannel(string channel) {
             this.channel = channel;
             return this;
         }
@@ -18,22 +18,22 @@ namespace BranchSdk {
             return this;
         }
 
-        public BranchShortLinkBuilder SetFeature(String feature) {
+        public BranchShortLinkBuilder SetFeature(string feature) {
             this.feature = feature;
             return this;
         }
 
-        public BranchShortLinkBuilder SetParameters(JObject parameters) {
+        public BranchShortLinkBuilder SetParameters(JsonObject parameters) {
             this.parameters = parameters;
             return this;
         }
 
-        public BranchShortLinkBuilder SetStage(String stage) {
+        public BranchShortLinkBuilder SetStage(string stage) {
             this.stage = stage;
             return this;
         }
 
-        public BranchShortLinkBuilder SetCampaign(String campaign) {
+        public BranchShortLinkBuilder SetCampaign(string campaign) {
             this.campaign = campaign;
             return this;
         }

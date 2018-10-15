@@ -1,51 +1,53 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Windows.Data.Json;
 
-namespace BranchSdk {
-    public interface IBranchPrefHelper {
+namespace BranchSdk
+{
+    public interface IBranchPrefHelper
+    {
+        bool IsLoaded { get; }
+        void ClearBranchAnalyticsData();
+        void ClearIsReferrable();
+        void ClearUserValues();
         string GetAPIBaseUrl();
+        string GetBranchAnalyticsData();
         string GetBranchKey();
+        int GetCreditCount();
+        int GetCreditCount(string bucket);
         string GetDeviceFingerPrintId();
         string GetIdentity();
         string GetIdentityId();
-        string GetLinkClickId();
-        string GetSessionId();
-        string GetSessionParams();
-        string GetUserUrl();
         string GetInstallParams();
         int GetIsReferrable();
-        int GetCreditCount();
-        int GetCreditCount(string bucket);
-        int GetNetworkTimeout();
+        string GetLinkClickId();
         int GetMaxRetries();
+        int GetNetworkTimeout();
+        string GetRequestMetadata();
         int GetRetryInterval();
-        JObject GetRequestMetadata();
+        string GetSessionId();
+        string GetSessionParams();
         bool GetTrackingDisable();
-        JObject GetBranchAnalyticsData();
+        string GetUserUrl();
+        Task LoadAll();
+        Task SaveAll();
+        void SaveBranchAnalyticsData(string analyticsDataRaw);
+        void SetActionTotalCount(string action, int count);
+        void SetActionUniqueCount(string action, int count);
         void SetBranchKey(string branchKey);
+        void SetCreditCount(string bucket, int count);
         void SetDeviceFingerPrintId(string deviceFingerPrintId);
         void SetIdentity(string identity);
         void SetIdentityId(string identityId);
+        void SetInstallParams(string installParams);
+        void SetIsReferrable();
         void SetLinkClickId(string linkClickId);
+        void SetMaxRetries(int maxRetries);
+        void SetNetworkTimeout(int networkTimeout);
+        void SetRequestMetadata(string key, string value);
+        void SetRetryInterval(int retryInterval);
         void SetSessionId(string sessionId);
         void SetSessionParams(string sessionParams);
-        void SetUserUrl(string userUrl);
-        void SetInstallParams(string parameters);
-        void ClearUserValues();
-        void SetCreditCount(string bucket, int count);
-        void SetActionTotalCount(string action, int count);
-        void SetActionUniqueCount(string action, int count);
-        void ClearIsReferrable();
-        void SetIsReferrable();
-        void SetNetworkTimeout(int timeout);
-        void SetMaxRetries(int maxRetries);
-        void SetRetryInterval(int retryInterval);
-        void SetRequestMetadata(string key, string value);
         void SetTrackingDisable(bool value);
-        void ClearBranchAnalyticsData();
-        void SaveBranchAnalyticsData(JObject analyticsData);
-        Task LoadAll();
-        Task SaveAll();
-        bool IsLoaded { get; }
+        void SetUserUrl(string userUrl);
     }
 }

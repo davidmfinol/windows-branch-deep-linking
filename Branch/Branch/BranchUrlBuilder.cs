@@ -1,13 +1,14 @@
 ﻿using BranchSdk.Net;
 using BranchSdk.Net.Requests;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using BranchSdk.Utils;
 
 namespace BranchSdk {
     public abstract class BranchUrlBuilder<T> where T : BranchUrlBuilder<T> {
-        protected JObject parameters;
+        protected JsonObject parameters;
         protected string channel;
         protected string feature;
         protected string stage;
@@ -35,9 +36,22 @@ namespace BranchSdk {
 
         public T AddParameters(string key, object value) {
             if (this.parameters == null) {
-                this.parameters = new JObject();
+                this.parameters = new JsonObject();
             }
-            this.parameters.Add(new JProperty(key, value));
+            if (value is string) this.parameters.Add(key, JsonValue.CreateStringValue((string)value));
+            else if (value.IsNumber()) {
+                if(value is float) {
+                    this.parameters.Add(key, JsonValue.CreateNumberValue((float)value));
+                } else {
+                    this.parameters.Add(key, JsonValue.CreateNumberValue(Convert.ToInt32(value)));
+                }
+            } else if (value is bool) this.parameters.Add(key, JsonValue.CreateBooleanValue((bool)value));
+            else if (value is null) this.parameters.Add(key, JsonValue.CreateNullValue());
+            else if (value.IsArray() || value.IsDictionary() || value.IsList()) {
+                this.parameters.Add(key, value.SerializeContainerAsJson());
+            } else {
+                this.parameters.Add(key, value.SerializeObjectAsJson());
+            }
             return (T)this;
         }
 

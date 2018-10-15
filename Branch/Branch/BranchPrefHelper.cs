@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
 using System.Diagnostics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
+using System.Runtime.InteropServices;
 
 namespace BranchSdk {
     //TODO: It should be extracted into a separate uwp library
-    public class BranchPrefHelper : IBranchPrefHelper {
+    public class BranchPrefHelper : IBranchPrefHelper
+    {
         private enum PrefKeyType {
             SessionId,
             IdentityId,
@@ -80,9 +81,9 @@ namespace BranchSdk {
         private int networkTimeout;
         private int maxRetries;
         private int retryInterval;
-        private JObject requestMetadata;
+        private JsonObject requestMetadata;
         private bool trackingDisabled;
-        private JObject analyticsData;
+        private JsonObject analyticsData;
 
         private bool isLoaded = false;
 
@@ -153,18 +154,18 @@ namespace BranchSdk {
             return retryInterval;
         }
 
-        public JObject GetRequestMetadata() {
-            if (requestMetadata == null) requestMetadata = new JObject();
-            return requestMetadata;
+        public string GetRequestMetadata() {
+            if (requestMetadata == null) requestMetadata = new JsonObject();
+            return requestMetadata.ToString();
         }
 
         public bool GetTrackingDisable() {
             return trackingDisabled;
         }
 
-        public JObject GetBranchAnalyticsData() {
-            if (analyticsData == null) analyticsData = new JObject();
-            return analyticsData;
+        public string GetBranchAnalyticsData() {
+            if (analyticsData == null) analyticsData = new JsonObject();
+            return analyticsData.ToString();
         }
 
         public void SetSessionId(string sessionId) {
@@ -249,13 +250,13 @@ namespace BranchSdk {
 
         public void SetRequestMetadata(string key, string value) {
             if (string.IsNullOrEmpty(key)) return;
-            if (requestMetadata == null) requestMetadata = new JObject();
+            if (requestMetadata == null) requestMetadata = new JsonObject();
 
             if (requestMetadata.ContainsKey(key) && value == null) {
                 requestMetadata.Remove(key);
             }
 
-            requestMetadata.Add(key, value);
+            requestMetadata.Add(key, JsonValue.CreateStringValue(value));
         }
 
         public void ClearUserValues() {
@@ -269,22 +270,24 @@ namespace BranchSdk {
         }
 
         public void ClearBranchAnalyticsData() {
-            analyticsData = new JObject();
+            analyticsData = new JsonObject();
         }
 
-        public void SaveBranchAnalyticsData(JObject analyticsData) {
+        public void SaveBranchAnalyticsData(string analyticsDataRaw) {
+            JsonObject analyticsData = JsonObject.Parse(analyticsDataRaw);
+
             string sessionID = GetSessionId();
             if (!string.IsNullOrEmpty(sessionID)) {
                 if (analyticsData == null) {
-                    analyticsData = GetBranchAnalyticsData();
+                    analyticsData = JsonObject.Parse(GetBranchAnalyticsData());
                 }
                 try {
-                    JArray viewDataArray;
+                    JsonArray viewDataArray;
                     if (analyticsData.ContainsKey(sessionID)) {
-                        viewDataArray = analyticsData[sessionID].Value<JArray>();
+                        viewDataArray = analyticsData[sessionID].GetArray();
 
                     } else {
-                        viewDataArray = new JArray();
+                        viewDataArray = new JsonArray();
                         analyticsData.Add(sessionID, viewDataArray);
                     }
                     viewDataArray.Add(analyticsData);
@@ -337,18 +340,18 @@ namespace BranchSdk {
 
             string requestMetadata = await Load(PrefKeyType.RequestMetadata, string.Empty);
             if (!string.IsNullOrEmpty(requestMetadata)) {
-                this.requestMetadata = JObject.Parse(requestMetadata);
+                this.requestMetadata = JsonObject.Parse(requestMetadata);
             } else {
-                this.requestMetadata = new JObject();
+                this.requestMetadata = new JsonObject();
             }
 
             bool.TryParse(await Load(PrefKeyType.TrackingDisabled, "false"), out trackingDisabled);
             
             string analyticsData = await Load(PrefKeyType.AnalyticsData, string.Empty);
             if (!string.IsNullOrEmpty(analyticsData)) {
-                this.analyticsData = JObject.Parse(analyticsData);
+                this.analyticsData = JsonObject.Parse(analyticsData);
             } else {
-                this.analyticsData = new JObject();
+                this.analyticsData = new JsonObject();
             }
 
             isLoaded = true;

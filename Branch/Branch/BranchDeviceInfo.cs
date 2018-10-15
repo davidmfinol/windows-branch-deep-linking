@@ -1,7 +1,8 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using BranchSdk.Utils;
 using System.Diagnostics;
+using Windows.Data.Json;
 
 namespace BranchSdk {
     public static class BranchDeviceInfo {
@@ -25,27 +26,27 @@ namespace BranchSdk {
             isRealHardwareId = LibraryAdapter.GetSystemObserver().IsRealHardwareId;
         }
 
-        public static void UpdateRequestWithUserData(JObject requestObj) {
+        public static void UpdateRequestWithUserData(JsonObject requestObj) {
             if (!string.IsNullOrEmpty(hardwareId)) {
-                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), hardwareId);
-                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), isRealHardwareId);
+                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), JsonValue.CreateStringValue(hardwareId));
+                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), JsonValue.CreateBooleanValue(isRealHardwareId));
             }
-            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), os);
-            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), osVersion);
-            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), localIp);
-            if (!string.IsNullOrEmpty(devIdentity)) requestObj.Add(BranchJsonKey.DeveloperIdentity.GetKey(), devIdentity);
-            requestObj.Add(BranchJsonKey.SDK.GetKey(), "windows");
-            requestObj.Add(BranchJsonKey.SdkVersion.GetKey(), Utils.AssemblyUtils.Version.ToString(3));
+            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), JsonValue.CreateStringValue(os));
+            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), JsonValue.CreateStringValue(osVersion));
+            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), JsonValue.CreateStringValue(localIp));
+            if (!string.IsNullOrEmpty(devIdentity)) requestObj.Add(BranchJsonKey.DeveloperIdentity.GetKey(), JsonValue.CreateStringValue(devIdentity));
+            requestObj.Add(BranchJsonKey.SDK.GetKey(), JsonValue.CreateStringValue("windows"));
+            requestObj.Add(BranchJsonKey.SdkVersion.GetKey(), JsonValue.CreateStringValue(AssemblyUtils.Version.ToString(3)));
         }
 
-        public static void UpdateRequestWithDeviceParams(JObject requestObj) {
+        public static void UpdateRequestWithDeviceParams(JsonObject requestObj) {
             if (!string.IsNullOrEmpty(hardwareId)) {
-                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), hardwareId);
-                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), isRealHardwareId);
+                requestObj.Add(BranchJsonKey.HardwareID.GetKey(), JsonValue.CreateStringValue(hardwareId));
+                requestObj.Add(BranchJsonKey.IsHardwareIDReal.GetKey(), JsonValue.CreateBooleanValue(isRealHardwareId));
             }
-            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), os);
-            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), osVersion);
-            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), localIp);
+            if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), JsonValue.CreateStringValue(os));
+            if (!string.IsNullOrEmpty(osVersion)) requestObj.Add(BranchJsonKey.OSVersion.GetKey(), JsonValue.CreateStringValue(osVersion));
+            if (!string.IsNullOrEmpty(localIp)) requestObj.Add(BranchJsonKey.LocalIP.GetKey(), JsonValue.CreateStringValue(localIp));
         }
     }
 }

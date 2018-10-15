@@ -1,6 +1,6 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Diagnostics;
 
@@ -12,10 +12,10 @@ namespace BranchSdk.Net.Requests {
             this.callback = callback;
             this.requestPath = Enum.RequestPath.RegisterOpen.GetPath();
 
-            JObject openPost = new JObject();
-            openPost.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId());
-            openPost.Add(BranchJsonKey.IdentityID.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentityId());
-            if(!string.IsNullOrEmpty(url)) openPost.Add(BranchJsonKey.WindowsAppWebLinkUrl.GetKey(), url);
+            JsonObject openPost = new JsonObject();
+            openPost.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId()));
+            openPost.Add(BranchJsonKey.IdentityID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentityId()));
+            if(!string.IsNullOrEmpty(url)) openPost.Add(BranchJsonKey.WindowsAppWebLinkUrl.GetKey(), JsonValue.CreateStringValue(url));
             SetPost(openPost);
         }
 
@@ -23,37 +23,37 @@ namespace BranchSdk.Net.Requests {
             Debug.WriteLine("RIGSTER OPEN REQUEST RESPONSE >>>>>");
             base.OnSuccess(responseAsText);
 
-            JObject responseAsJson = JObject.Parse(responseAsText);
+            JsonObject responseAsJson = JsonObject.Parse(responseAsText);
 
             if (responseAsJson.ContainsKey(BranchJsonKey.LinkClickID.GetKey())) {
-                LibraryAdapter.GetPrefHelper().SetLinkClickId(responseAsJson[BranchJsonKey.LinkClickID.GetKey()].Value<string>());
+                LibraryAdapter.GetPrefHelper().SetLinkClickId(responseAsJson[BranchJsonKey.LinkClickID.GetKey()].GetString());
             } else {
                 LibraryAdapter.GetPrefHelper().SetLinkClickId(string.Empty);
             }
 
             if (responseAsJson.ContainsKey(BranchJsonKey.Data.GetKey())) {
-                JObject dataObj = JObject.Parse(responseAsJson[BranchJsonKey.Data.GetKey()].Value<string>().Replace(@"\",""));
+                JsonObject dataObj = JsonObject.Parse(responseAsJson[BranchJsonKey.Data.GetKey()].GetString().Replace(@"\",""));
                 if (dataObj.ContainsKey(BranchJsonKey.Clicked_Branch_Link.GetKey()) &&
-                    (dataObj[BranchJsonKey.Clicked_Branch_Link.GetKey()].Value<bool>() == true)) {
+                    (dataObj[BranchJsonKey.Clicked_Branch_Link.GetKey()].GetBoolean() == true)) {
                     if (string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetInstallParams())) {
                         if (LibraryAdapter.GetPrefHelper().GetIsReferrable().Equals(1)) {
-                            LibraryAdapter.GetPrefHelper().SetInstallParams(responseAsJson[BranchJsonKey.Data.GetKey()].Value<string>());
+                            LibraryAdapter.GetPrefHelper().SetInstallParams(responseAsJson[BranchJsonKey.Data.GetKey()].GetString());
                         }
                     }
                 }
             }
 
             if (responseAsJson.ContainsKey(BranchJsonKey.Data.GetKey())) {
-                LibraryAdapter.GetPrefHelper().SetSessionParams(responseAsJson[BranchJsonKey.Data.GetKey()].Value<string>());
+                LibraryAdapter.GetPrefHelper().SetSessionParams(responseAsJson[BranchJsonKey.Data.GetKey()].GetString());
             } else {
                 LibraryAdapter.GetPrefHelper().SetSessionParams(string.Empty);
             }
 
-            LibraryAdapter.GetPrefHelper().SetSessionId(responseAsJson[BranchJsonKey.SessionID.GetKey()].Value<string>());
-            LibraryAdapter.GetPrefHelper().SetIdentityId(responseAsJson[BranchJsonKey.IdentityID.GetKey()].Value<string>());
-            LibraryAdapter.GetPrefHelper().SetDeviceFingerPrintId(responseAsJson[BranchJsonKey.DeviceFingerprintID.GetKey()].Value<string>());
+            LibraryAdapter.GetPrefHelper().SetSessionId(responseAsJson[BranchJsonKey.SessionID.GetKey()].GetString());
+            LibraryAdapter.GetPrefHelper().SetIdentityId(responseAsJson[BranchJsonKey.IdentityID.GetKey()].GetString());
+            LibraryAdapter.GetPrefHelper().SetDeviceFingerPrintId(responseAsJson[BranchJsonKey.DeviceFingerprintID.GetKey()].GetString());
 
-            if (callback != null) callback.Invoke(JObject.Parse(responseAsText), string.Empty);
+            if (callback != null) callback.Invoke(responseAsText, string.Empty);
         }
 
         public override void OnFailed(string errorMessage, int statusCode) {
@@ -72,7 +72,7 @@ namespace BranchSdk.Net.Requests {
                 PostData.Remove(BranchJsonKey.IsHardwareIDReal.GetKey());
                 PostData.Remove(BranchJsonKey.LocalIP.GetKey());
                 PostData.Remove(BranchJsonKey.Metadata.GetKey());
-                PostData.Add(BranchJsonKey.TrackingDisable.GetKey(), true);
+                PostData.Add(BranchJsonKey.TrackingDisable.GetKey(), JsonValue.CreateBooleanValue(true));
             } catch (Exception ignore) {
                 return false;
             }

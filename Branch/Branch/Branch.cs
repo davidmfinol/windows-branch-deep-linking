@@ -2,46 +2,46 @@
 using BranchSdk.Enum;
 using BranchSdk.Net;
 using BranchSdk.Net.Requests;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Data.Json;
 using Windows.UI.Core;
 
 namespace BranchSdk {
-    public class BranchInitCallbackWrapper {
+    [ComVisible(true)]
+    public class BranchInitCallbackWrapper
+    {
         private enum Types {
-            WithDictionary,
             WithBUO
         }
         private Types type;
 
-        public Branch.BranchInitCallbackWithDictionary dictionaryCallback;
-        public Branch.BranchInitCallbackWithBUO buoCallback;
-        public Action CommonCallback;
+        public Branch.BranchInitCallbackWithBUO BuoCallback { get; set; }
+        public Action CommonCallback { get; set; }
 
-        public BranchInitCallbackWrapper(Branch.BranchInitCallbackWithDictionary dictionaryCallback) {
-            this.dictionaryCallback = dictionaryCallback;
-            type = Types.WithDictionary;
-        }
-
-        public BranchInitCallbackWrapper(Branch.BranchInitCallbackWithBUO buoCallback) {
-            this.buoCallback = buoCallback;
+        public BranchInitCallbackWrapper(Branch.BranchInitCallbackWithBUO buoCallback)
+        {
+            this.BuoCallback = buoCallback;
             type = Types.WithBUO;
         }
 
-        public void Invoke(JObject jsonData, string error) {
+        public void Invoke(string jsonDataRaw, string error)
+        {
+            JsonObject jsonData = JsonObject.Parse(jsonDataRaw);
+
             if (CommonCallback != null) CommonCallback.Invoke();
 
-            string serializedJson = jsonData["data"].ToString();
+            string serializedJson = jsonData.GetNamedString("data");
             serializedJson = serializedJson.Replace(@"\", "");
-
-            if (type == Types.WithDictionary) {
-                jsonData = JObject.Parse(serializedJson);
-                dictionaryCallback.Invoke(jsonData.ToObject<Dictionary<string, object>>(), null);
-            } else {
-                buoCallback.Invoke(new BranchUniversalObject(serializedJson), new BranchLinkProperties(serializedJson), null);
+            JsonObject jsonDataObj;
+            bool status = JsonObject.TryParse(serializedJson, out jsonDataObj);
+            if (status) {
+                if (type == Types.WithBUO) {
+                    BuoCallback.Invoke(new BranchUniversalObject(serializedJson), new BranchLinkProperties(serializedJson), null);
+                }
             }
         }
     }
@@ -93,10 +93,12 @@ namespace BranchSdk {
             return GetBranchInstance(!BranchUtil.IsCustomDebugEnabled, string.Empty);
         }
 
-        private static Branch GetBranchInstance(bool isLive, string branchKey) {
+        public static Branch GetBranchInstance(bool isLive, string branchKey) {
             if (string.IsNullOrEmpty(branchKey)) {
                 string lastBranchKey = LibraryAdapter.GetPrefHelper().GetBranchKey();
                 LibraryAdapter.GetPrefHelper().SetBranchKey(isLive ? BranchConfigManager.GetLiveBranchKey() : BranchConfigManager.GetTestBranchKey());
+
+                Debug.WriteLine(lastBranchKey);
 
                 if(!lastBranchKey.Equals(LibraryAdapter.GetPrefHelper().GetBranchKey())) {
                     LibraryAdapter.GetPrefHelper().ClearUserValues();
@@ -114,15 +116,14 @@ namespace BranchSdk {
         public const int LINK_TYPE_UNLIMITED_USE = 0;
         public const int LINK_TYPE_ONE_TIME_USE = 1;
 
-        private JObject deeplinkDebugParams;
+        private JsonObject deeplinkDebugParams;
         private BranchShareLinkManager branchShareLinkManager;
 
-        public delegate void BranchGetRewardHistoryCallback(JArray jArray, BranchError error);
+        public delegate void BranchGetRewardHistoryCallback(JsonArray jArray, BranchError error);
         public delegate void BranchRedeemRewardsCallback(bool changed, BranchError error);
         public delegate void BranchGetRewardsCallback(bool changed, BranchError error);
         public delegate void BranchLogoutCallback(bool loggedOut, BranchError error);
-        public delegate void BranchIdentityUserCallback(JObject referringParams, BranchError error);
-        public delegate void BranchInitCallbackWithDictionary(Dictionary<string, object> parameters, BranchError error);
+        public delegate void BranchIdentityUserCallback(JsonObject referringParams, BranchError error);
         public delegate void BranchInitCallbackWithBUO(BranchUniversalObject universalObject, BranchLinkProperties linkProperties, BranchError error);
         public delegate void BranchCreateLinkCallback(string url, BranchError error);
 
@@ -263,16 +264,16 @@ namespace BranchSdk {
             return request;
         }
 
-        public JObject GetFirstParams() {
+        public JsonObject GetFirstParams() {
             string storedParam = LibraryAdapter.GetPrefHelper().GetInstallParams();
-            JObject firstReferringParams = ConvertParamsStringToDictionary(storedParam);
+            JsonObject firstReferringParams = ConvertParamsStringToDictionary(storedParam);
             firstReferringParams = AppendDebugParams(firstReferringParams);
             return firstReferringParams;
         } 
 
-        public JObject GetSessionParams() {
+        public JsonObject GetSessionParams() {
             string storedParam = LibraryAdapter.GetPrefHelper().GetSessionParams();
-            JObject latestParams = ConvertParamsStringToDictionary(storedParam);
+            JsonObject latestParams = ConvertParamsStringToDictionary(storedParam);
             latestParams = AppendDebugParams(latestParams);
             return latestParams;
         }
@@ -321,7 +322,7 @@ namespace BranchSdk {
             BranchServerRequestQueue.RunQueue();
         }
 
-        public void UserCompletedAction(string action, JObject metadata) {
+        public void UserCompletedAction(string action, JsonObject metadata) {
             UserCompletedAction(action, metadata, null);
         }
 
@@ -335,7 +336,7 @@ namespace BranchSdk {
         }
 
         //TODO CHANGE CALLBACK
-        public void UserCompletedAction(string action, JObject metadata, Action callback) {
+        public void UserCompletedAction(string action, JsonObject metadata, Action callback) {
             BranchServerActionCompleted request = new BranchServerActionCompleted(action, metadata);
             request.RequestType = RequestTypes.POST;
 
@@ -407,14 +408,14 @@ namespace BranchSdk {
             initState = SessionState.Uninitialised;
         }
 
-        private JObject AppendDebugParams(JObject originalParams) {
+        private JsonObject AppendDebugParams(JsonObject originalParams) {
             try {
                 if (originalParams != null && deeplinkDebugParams != null) {
                     if (deeplinkDebugParams.Count > 0) {
                         Debug.WriteLine("You're currently in deep link debug mode. Please comment out 'setDeepLinkDebugMode' to receive the deep link parameters from a real Branch link");
                     }
-                    foreach(JProperty prop in deeplinkDebugParams.Properties()) {
-                        originalParams.Add(prop.Name, prop);
+                    foreach(string key in deeplinkDebugParams.Keys) {
+                        originalParams.Add(key, deeplinkDebugParams[key]);
                     }
                 }
             } catch (Exception ignore) {
@@ -422,11 +423,11 @@ namespace BranchSdk {
             return originalParams;
         }
 
-        private JObject ConvertParamsStringToDictionary(string paramString) {
+        private JsonObject ConvertParamsStringToDictionary(string paramString) {
             if (string.IsNullOrEmpty(paramString)) {
-                return new JObject();
+                return new JsonObject();
             } else {
-                return JObject.Parse(paramString);
+                return JsonObject.Parse(paramString);
             }
         }
     }

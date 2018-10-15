@@ -1,6 +1,5 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Data.Json;
 
 namespace BranchSdk.Net.Requests {
     public class BranchServerRequest {
@@ -20,7 +20,7 @@ namespace BranchSdk.Net.Requests {
 
         public RequestTypes RequestType { get; set; }
 
-        protected JObject postData;
+        protected JsonObject postData;
         protected string requestPath;
 
         public string RequestPath {
@@ -33,7 +33,7 @@ namespace BranchSdk.Net.Requests {
             get; set;
         }
 
-        public JObject PostData {
+        public JsonObject PostData {
             get {
                 return postData;
             }
@@ -49,13 +49,13 @@ namespace BranchSdk.Net.Requests {
             return LibraryAdapter.GetPrefHelper().GetAPIBaseUrl() + requestPath + RequestParameters;
         }
 
-        public void SetPost(JObject postData) {
+        public void SetPost(JsonObject postData) {
             this.postData = postData;
 
-            if (this.postData == null) this.postData = new JObject();
+            if (this.postData == null) this.postData = new JsonObject();
 
             if (ApiVersion == BranchApiVersions.V2) {
-                JObject userData = new JObject();
+                JsonObject userData = new JsonObject();
                 BranchDeviceInfo.UpdateRequestWithUserData(userData);
                 this.postData.Add(BranchJsonKey.UserData.GetKey(), userData);
             } else {
@@ -82,16 +82,16 @@ namespace BranchSdk.Net.Requests {
             return false;
         }
 
-        protected void UpdateEnvironment(JObject post) {
+        protected void UpdateEnvironment(JsonObject post) {
             try {
                 string environment = BranchJsonKey.InstantApp.GetKey();
                 if (ApiVersion == BranchApiVersions.V2) {
-                    JObject userData = post[BranchJsonKey.UserData.GetKey()].Value<JObject>();
+                    JsonObject userData = post[BranchJsonKey.UserData.GetKey()].GetObject();
                     if (userData != null) {
-                        userData.Add(BranchJsonKey.Environment.GetKey(), environment);
+                        userData.Add(BranchJsonKey.Environment.GetKey(), JsonValue.CreateStringValue(environment));
                     }
                 } else {
-                    post.Add(BranchJsonKey.Environment.GetKey(), environment);
+                    post.Add(BranchJsonKey.Environment.GetKey(), JsonValue.CreateStringValue(environment));
                 }
             } catch (Exception ignore) {
             }

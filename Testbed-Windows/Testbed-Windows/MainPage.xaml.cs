@@ -6,11 +6,11 @@ using BranchSdk;
 using System.Threading.Tasks;
 using BranchSdk.CrossPlatform;
 using Windows.UI.Text;
-using Newtonsoft.Json.Linq;
 using System.Text;
 using Windows.UI.Core;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Xaml.Navigation;
+using Windows.Data.Json;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -36,16 +36,15 @@ namespace TestbedWindows
         }
 
         private void OnDeepLinkOpened(string url) {
-            Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
+            Branch.I.InitSession(new BranchInitCallbackWrapper(async (buo, link, error) => {
                 List<string> lines = new List<string>();
                 lines.Add("Init session, parameters: ");
-                foreach (string key in parameters.Keys) {
-                    lines.Add(key + " - " + parameters[key]);
-                }
+                lines.Add("Title" + " - " + buo.Title);
+                lines.Add("Link" + " - " + buo.CanonicalUrl);
                 await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => {
                     AddLog(lines);
                 });
-            }), url);
+            }));
         }
 
         public void Main() {
@@ -54,12 +53,11 @@ namespace TestbedWindows
                 await LibraryAdapter.GetPrefHelper().LoadAll();
 
                 Branch.GetTestInstance();
-                Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
+                Branch.I.InitSession(new BranchInitCallbackWrapper(async (buo, link, error) => {
                     List<string> lines = new List<string>();
                     lines.Add("Init session, parameters: ");
-                    foreach (string key in parameters.Keys) {
-                        lines.Add(key + " - " + parameters[key]);
-                    }
+                    lines.Add("Title" + " - " + buo.Title);
+                    lines.Add("Link" + " - " + buo.CanonicalUrl);
                     await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => {
                         AddLog(lines);
                     });
@@ -157,12 +155,13 @@ namespace TestbedWindows
             });
         }
 
-        private void OnBuyWithMetadataClicked(object sender, RoutedEventArgs e) {
-            JObject parameters = new JObject();
-            parameters.Add("name", "Alex");
-            parameters.Add("boolean", true);
-            parameters.Add("int", 1);
-            parameters.Add("double", 0.13415512301);
+        private void OnBuyWithMetadataClicked(object sender, RoutedEventArgs e)
+        {
+            JsonObject parameters = new JsonObject();
+            parameters.Add("name", JsonValue.CreateStringValue("Alex"));
+            parameters.Add("boolean", JsonValue.CreateBooleanValue(true));
+            parameters.Add("int", JsonValue.CreateNumberValue(1));
+            parameters.Add("double", JsonValue.CreateNumberValue(0.13415512301));
 
             Branch.I.UserCompletedAction("buy", parameters);
         }
@@ -172,12 +171,12 @@ namespace TestbedWindows
                 await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
                     List<string> lines = new List<string>();
                     if(response != null) {
-                        foreach(JObject prop in response) {
-                            JObject transaction = prop["transaction"].Value<JObject>();
+                        foreach(JsonValue prop in response) {
+                            JsonObject transaction = prop.GetObject().GetNamedObject("transaction");
                             StringBuilder sb = new StringBuilder();
-                            sb.Append(transaction["date"].Value<string>() + " - ");
-                            sb.Append(transaction["bucket"].Value<string>() + ", amount: ");
-                            sb.Append(transaction["amount"].Value<int>());
+                            sb.Append(transaction.GetNamedString("date") + " - ");
+                            sb.Append(transaction.GetNamedString("bucket") + ", amount: ");
+                            sb.Append(transaction.GetNamedNumber("amount"));
                             lines.Add(sb.ToString());
                         }
                     }

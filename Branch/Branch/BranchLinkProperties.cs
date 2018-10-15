@@ -1,9 +1,9 @@
 ﻿using BranchSdk.Enum;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using COMWrapper;
 
 namespace BranchSdk {
     public class BranchLinkProperties {
@@ -80,58 +80,73 @@ namespace BranchSdk {
             return this;
         }
 
+        public void SetTags(List<string> tags)
+        {
+            Tags = tags;
+        }
+
+        public void SetControlParams(Dictionary<string, string> controlParams)
+        {
+            ControlParams = controlParams;
+        }
+
         private void LoadFromJson(string json) {
             if (string.IsNullOrEmpty(json))
                 return;
 
-            JObject jsonObject = JObject.Parse(json);
+            JsonObject jsonObject = JsonObject.Parse(json);
             if(jsonObject.ContainsKey(BranchJsonKey.Clicked_Branch_Link.GetKey())
-                && jsonObject[BranchJsonKey.Clicked_Branch_Link.GetKey()].Value<bool>()) {
+                && jsonObject[BranchJsonKey.Clicked_Branch_Link.GetKey()].GetBoolean()) {
 
-                if (jsonObject.ContainsKey("~channel") && !string.IsNullOrEmpty(jsonObject["~channel"].Value<string>())) {
-                    SetChannel(jsonObject["~channel"].Value<string>());
+                if (jsonObject.ContainsKey("~channel") && !string.IsNullOrEmpty(jsonObject["~channel"].GetString())) {
+                    SetChannel(jsonObject["~channel"].GetString());
                 }
 
-                if (jsonObject.ContainsKey("~feature") && !string.IsNullOrEmpty(jsonObject["~feature"].Value<string>())) {
-                    SetFeature(jsonObject["~feature"].Value<string>());
+                if (jsonObject.ContainsKey("~feature") && !string.IsNullOrEmpty(jsonObject["~feature"].GetString())) {
+                    SetFeature(jsonObject["~feature"].GetString());
                 }
 
-                if (jsonObject.ContainsKey("~stage") && !string.IsNullOrEmpty(jsonObject["~stage"].Value<string>())) {
-                    SetStage(jsonObject["~stage"].Value<string>());
+                if (jsonObject.ContainsKey("~stage") && !string.IsNullOrEmpty(jsonObject["~stage"].GetString())) {
+                    SetStage(jsonObject["~stage"].GetString());
                 }
 
-                if (jsonObject.ContainsKey("~campaign") && !string.IsNullOrEmpty(jsonObject["~campaign"].Value<string>())) {
-                    SetCampaign(jsonObject["~campaign"].Value<string>());
+                if (jsonObject.ContainsKey("~campaign") && !string.IsNullOrEmpty(jsonObject["~campaign"].GetString())) {
+                    SetCampaign(jsonObject["~campaign"].GetString());
                 }
 
-                if (jsonObject.ContainsKey("~duration") && !string.IsNullOrEmpty(jsonObject["~duration"].Value<string>())) {
-                    SetDuration(jsonObject["~duration"].Value<int>());
+                if (jsonObject.ContainsKey("~duration")) {
+                    SetDuration((int)jsonObject["~duration"].GetNumber());
                 }
 
-                if (jsonObject.ContainsKey("$match_duration") && !string.IsNullOrEmpty(jsonObject["$match_duration"].Value<string>())) {
-                    SetDuration(jsonObject["$match_duration"].Value<int>());
+                if (jsonObject.ContainsKey("$match_duration")) {
+                    SetDuration((int)jsonObject["$match_duration"].GetNumber());
                 }
 
-                if (jsonObject.ContainsKey("~tags") && jsonObject["~tags"].ToObject<List<string>>() != null) {
-                    Tags = jsonObject["~tags"].ToObject<List<string>>();
+                if (jsonObject.ContainsKey("~tags") && jsonObject["~tags"].GetArray().DeserializeObject<List<string>>() != null) {
+                    Tags = jsonObject["~tags"].GetArray().DeserializeObject<List<string>>();
                 }
 
-                foreach (JProperty prop in jsonObject.Properties()) {
-                    if (prop.Name.StartsWith("$")) {
-                        string value = string.Empty;
-
-                        if (jsonObject[prop.Name].Type == JTokenType.Array) {
-                            value = jsonObject[prop.Name].Value<JArray>().ToString();
-                        } else if (jsonObject[prop.Name].Type == JTokenType.Object) {
-                            value = jsonObject[prop.Name].Value<JObject>().ToString();
-                        } else {
-                            value = jsonObject[prop.Name].Value<string>();
-                        }
-
-                        AddControlParameter(prop.Name, value);
+                foreach (string key in jsonObject.Keys) {
+                    if (key.StartsWith("$")) {
+                        string value = jsonObject[key].ToString();
+                        AddControlParameter(key, value);
                     }
                 }
             }
+        }
+
+        public ICOMBranchLinkProperties ParseNativeLinkProperties()
+        {
+            ICOMBranchLinkProperties comLink = new COMBranchLinkProperties();
+            comLink.Tags = Tags;
+            comLink.ControlParams = ControlParams;
+            comLink.Feature = Feature;
+            comLink.Alias = Alias;
+            comLink.Stage = Stage;
+            comLink.MatchDuration = MatchDuration;
+            comLink.Channel = Channel;
+            comLink.Campaign = Campaign;
+            return comLink;
         }
     }
 }

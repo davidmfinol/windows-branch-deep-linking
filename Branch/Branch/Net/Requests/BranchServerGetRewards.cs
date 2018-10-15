@@ -1,6 +1,6 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,8 +16,8 @@ namespace BranchSdk.Net.Requests {
             this.callback = callback;
             this.requestPath = Enum.RequestPath.GetCredits.GetPath();
 
-            JObject post = new JObject();
-            post.Add(BranchJsonKey.Identity.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentity());
+            JsonObject post = new JsonObject();
+            post.Add(BranchJsonKey.Identity.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentity()));
             SetPost(post);
 
             BranchRequestHelper.MakeRestfulGetRequest(this);
@@ -27,16 +27,16 @@ namespace BranchSdk.Net.Requests {
             Debug.WriteLine("GET REWARDS RESPONSE >>>>>");
             base.OnSuccess(responseAsText);
 
-            JObject resp = JObject.Parse(responseAsText);
+            JsonObject resp = JsonObject.Parse(responseAsText);
             bool updateListener = false;
 
-            foreach(JProperty prop in resp.Properties()) {
-                int credits = resp[prop.Name].Value<int>();
-                if (credits != LibraryAdapter.GetPrefHelper().GetCreditCount(prop.Name)) {
+            foreach(string key in resp.Keys) {
+                int credits = (int)resp[key].GetNumber();
+                if (credits != LibraryAdapter.GetPrefHelper().GetCreditCount(key)) {
                     updateListener = true;
                 }
                 Debug.WriteLine(credits);
-                LibraryAdapter.GetPrefHelper().SetCreditCount(prop.Name, credits);
+                LibraryAdapter.GetPrefHelper().SetCreditCount(key, credits);
             }
 
             if (callback != null) callback.Invoke(updateListener, null);

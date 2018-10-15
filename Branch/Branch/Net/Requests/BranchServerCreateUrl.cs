@@ -1,36 +1,36 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace BranchSdk.Net.Requests {
     public class BranchServerCreateUrl : BranchServerRequest {
         private Branch.BranchCreateLinkCallback callback;
-        private JObject linkPost;
+        private JsonObject linkPost;
 
-        public BranchServerCreateUrl(string alias, int type, int duration, List<string> tags, string channel, string feature, string stage, string campaign, JObject parameters, Branch.BranchCreateLinkCallback callback) {
+        public BranchServerCreateUrl(string alias, int type, int duration, List<string> tags, string channel, string feature, string stage, string campaign, JsonObject parameters, Branch.BranchCreateLinkCallback callback) {
             this.callback = callback;
             this.requestPath = Enum.RequestPath.GetURL.GetPath();
 
-            linkPost = new JObject();
-            linkPost.Add(BranchJsonKey.IdentityID.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentityId());
-            linkPost.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId());
-            linkPost.Add(BranchJsonKey.SessionID.GetKey(), LibraryAdapter.GetPrefHelper().GetSessionId());
+            linkPost = new JsonObject();
+            linkPost.Add(BranchJsonKey.IdentityID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentityId()));
+            linkPost.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId()));
+            linkPost.Add(BranchJsonKey.SessionID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetSessionId()));
 
             if (!string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetLinkClickId())) {
-                linkPost.Add(BranchJsonKey.LinkClickID.GetKey(), LibraryAdapter.GetPrefHelper().GetLinkClickId());
+                linkPost.Add(BranchJsonKey.LinkClickID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetLinkClickId()));
             }
 
-            linkPost.Add(LinkParam.Type.GetKey(), type);
-            linkPost.Add(LinkParam.Duration.GetKey(), duration);
-            linkPost.Add(new JProperty(LinkParam.Tags.GetKey(), tags));
-            linkPost.Add(LinkParam.Alias.GetKey(), alias);
-            linkPost.Add(LinkParam.Channel.GetKey(), channel);
-            linkPost.Add(LinkParam.Feature.GetKey(), feature);
-            linkPost.Add(LinkParam.Stage.GetKey(), stage);
-            linkPost.Add(LinkParam.Campaign.GetKey(), campaign);
-            linkPost.Add(LinkParam.Data.GetKey(), parameters);
+            linkPost.Add(LinkParam.Type.GetKey(), JsonValue.CreateNumberValue(type));
+            linkPost.Add(LinkParam.Duration.GetKey(), JsonValue.CreateNumberValue(duration));
+            linkPost.Add(LinkParam.Tags.GetKey(), tags.SerializeListAsJson());
+            if (!string.IsNullOrEmpty(alias)) linkPost.Add(LinkParam.Alias.GetKey(), JsonValue.CreateStringValue(alias));
+            if (!string.IsNullOrEmpty(channel)) linkPost.Add(LinkParam.Channel.GetKey(), JsonValue.CreateStringValue(channel));
+            if (!string.IsNullOrEmpty(feature)) linkPost.Add(LinkParam.Feature.GetKey(), JsonValue.CreateStringValue(feature));
+            if (!string.IsNullOrEmpty(stage)) linkPost.Add(LinkParam.Stage.GetKey(), JsonValue.CreateStringValue(stage));
+            if (!string.IsNullOrEmpty(campaign)) linkPost.Add(LinkParam.Campaign.GetKey(), JsonValue.CreateStringValue(campaign));
+            if (parameters != null) linkPost.Add(LinkParam.Data.GetKey(), parameters);
 
             SetPost(linkPost);
         }
@@ -39,9 +39,9 @@ namespace BranchSdk.Net.Requests {
             Debug.WriteLine("CREATE URL REQUEST RESPONSE >>>>>");
             base.OnSuccess(responseAsText);
 
-            JObject resp = JObject.Parse(responseAsText);
+            JsonObject resp = JsonObject.Parse(responseAsText);
 
-            if (callback != null) callback.Invoke(resp["url"].Value<string>(), null);
+            if (callback != null) callback.Invoke(resp["url"].GetString(), null);
         }
 
         public override void OnFailed(string errorMessage, int statusCode) {

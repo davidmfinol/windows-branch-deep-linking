@@ -1,6 +1,6 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,19 +24,19 @@ namespace BranchSdk.Net.Requests {
                 actualNumOfCreditsToRedeem = availableCredits;
                 Debug.WriteLine("Branch Warning: You're trying to redeem more credits than are available. Have you updated loaded rewards");
             }
-            if(actualNumOfCreditsToRedeem > 0) {
-                JObject post = new JObject();
-                post.Add(BranchJsonKey.IdentityID.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentityId());
-                post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId());
-                post.Add(BranchJsonKey.SessionID.GetKey(), LibraryAdapter.GetPrefHelper().GetSessionId());
-                if(!string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetLinkClickId())) {
-                    post.Add(BranchJsonKey.LinkClickID.GetKey(), LibraryAdapter.GetPrefHelper().GetLinkClickId());
-                }
-                post.Add(BranchJsonKey.Bucket.GetKey(), bucketName);
-                post.Add(BranchJsonKey.Amount.GetKey(), actualNumOfCreditsToRedeem);
 
-                SetPost(post);
+            JsonObject post = new JsonObject();
+            if (actualNumOfCreditsToRedeem > 0) {
+                post.Add(BranchJsonKey.IdentityID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentityId()));
+                post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId()));
+                post.Add(BranchJsonKey.SessionID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetSessionId()));
+                if(!string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetLinkClickId())) {
+                    post.Add(BranchJsonKey.LinkClickID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetLinkClickId()));
+                }
+                post.Add(BranchJsonKey.Bucket.GetKey(), JsonValue.CreateStringValue(bucketName));
+                post.Add(BranchJsonKey.Amount.GetKey(), JsonValue.CreateNumberValue(actualNumOfCreditsToRedeem));
             }
+            SetPost(post);
         }
 
         public override void OnSuccess(string responseAsText) {
@@ -44,11 +44,11 @@ namespace BranchSdk.Net.Requests {
             base.OnSuccess(responseAsText);
 
             bool isRedemptionSucceeded = false;
-            JObject post = PostData;
+            JsonObject post = PostData;
             if(post != null) {
                 if(post.ContainsKey(BranchJsonKey.Bucket.GetKey()) && post.ContainsKey(BranchJsonKey.Amount.GetKey())) {
-                    int redeemdCredits = post[BranchJsonKey.Amount.GetKey()].Value<int>();
-                    string creditBucket = post[BranchJsonKey.Bucket.GetKey()].Value<string>();
+                    int redeemdCredits = (int)post[BranchJsonKey.Amount.GetKey()].GetNumber();
+                    string creditBucket = post[BranchJsonKey.Bucket.GetKey()].GetString();
                     isRedemptionSucceeded = redeemdCredits > 0;
 
                     int updatedCreditCount = LibraryAdapter.GetPrefHelper().GetCreditCount(creditBucket) - redeemdCredits;

@@ -1,6 +1,6 @@
 ﻿using BranchSdk.CrossPlatform;
 using BranchSdk.Enum;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,20 +8,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BranchSdk.Net.Requests {
-    public class BranchServerActionCompleted : BranchServerRequest {
-        public BranchServerActionCompleted(string action, JObject metadata) {
+namespace BranchSdk.Net.Requests
+{
+    public class BranchServerActionCompleted : BranchServerRequest
+    {
+        public BranchServerActionCompleted(string action, JsonObject metadata)
+        {
             this.requestPath = Enum.RequestPath.CompletedAction.GetPath();
 
-            JObject post = new JObject();
-            post.Add(BranchJsonKey.IdentityID.GetKey(), LibraryAdapter.GetPrefHelper().GetIdentityId());
-            post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId());
-            post.Add(BranchJsonKey.SessionID.GetKey(), LibraryAdapter.GetPrefHelper().GetSessionId());
+            JsonObject post = new JsonObject();
+            post.Add(BranchJsonKey.IdentityID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetIdentityId()));
+            post.Add(BranchJsonKey.DeviceFingerprintID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetDeviceFingerPrintId()));
+            post.Add(BranchJsonKey.SessionID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetSessionId()));
             if (!string.IsNullOrEmpty(LibraryAdapter.GetPrefHelper().GetLinkClickId())) {
-                post.Add(BranchJsonKey.LinkClickID.GetKey(), LibraryAdapter.GetPrefHelper().GetLinkClickId());
+                post.Add(BranchJsonKey.LinkClickID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetLinkClickId()));
             }
-            post.Add(BranchJsonKey.Event.GetKey(), action);
-            if(metadata != null) {
+            post.Add(BranchJsonKey.Event.GetKey(), JsonValue.CreateStringValue(action));
+            if (metadata != null) {
                 post.Add(BranchJsonKey.Metadata.GetKey(), metadata);
             }
 

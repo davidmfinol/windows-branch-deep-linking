@@ -1,5 +1,9 @@
 Branch Windows SDK change log
 
+- 0.0.6
+  * Adding COM interface
+  * Updating readme.md
+
 - 0.0.5
   * Adding "sdk" and "sdk_version" fields in requests
 

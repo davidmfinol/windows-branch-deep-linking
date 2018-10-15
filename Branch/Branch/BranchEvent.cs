@@ -1,7 +1,7 @@
 ﻿using BranchSdk.Enum;
 using BranchSdk.Net;
 using BranchSdk.Net.Requests;
-using Newtonsoft.Json.Linq;
+using Windows.Data.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,29 +10,29 @@ namespace BranchSdk {
     public class BranchEvent {
         private readonly string eventName;
         private readonly bool isStandartEvent;
-        private readonly JObject standartProperties;
-        private readonly JObject customProperties;
+        private readonly JsonObject standartProperties;
+        private readonly JsonObject customProperties;
         private readonly List<BranchUniversalObject> buoList;
 
         public BranchEvent(BranchStandartEvent branchStandartEvent) {
-            standartProperties = new JObject();
-            customProperties = new JObject();
+            standartProperties = new JsonObject();
+            customProperties = new JsonObject();
             this.eventName = branchStandartEvent.GetEventName();
             this.isStandartEvent = true;
             buoList = new List<BranchUniversalObject>();
         }
 
         public BranchEvent(string eventName) {
-            standartProperties = new JObject();
-            customProperties = new JObject();
+            standartProperties = new JsonObject();
+            customProperties = new JsonObject();
             this.eventName = eventName;
             this.isStandartEvent = false;
             buoList = new List<BranchUniversalObject>();
         }
 
         public BranchEvent(string eventName, bool isStandartEvent) {
-            standartProperties = new JObject();
-            customProperties = new JObject();
+            standartProperties = new JsonObject();
+            customProperties = new JsonObject();
             this.eventName = eventName;
             this.isStandartEvent = isStandartEvent;
             buoList = new List<BranchUniversalObject>();
@@ -47,15 +47,15 @@ namespace BranchSdk {
         }
 
         public BranchEvent SetRevenue(double revenue) {
-            return AddStandardProperty(BranchJsonKey.Revenue.GetKey(), revenue);
+            return AddStandardProperty(BranchJsonKey.Revenue.GetKey(), revenue.ToString());
         }
 
         public BranchEvent SetShipping(double shipping) {
-            return AddStandardProperty(BranchJsonKey.Shipping.GetKey(), shipping);
+            return AddStandardProperty(BranchJsonKey.Shipping.GetKey(), shipping.ToString());
         }
 
         public BranchEvent SetTax(double tax) {
-            return AddStandardProperty(BranchJsonKey.Tax.GetKey(), tax);
+            return AddStandardProperty(BranchJsonKey.Tax.GetKey(), tax.ToString());
         }
 
         public BranchEvent SetCoupon(string coupon) {
@@ -74,10 +74,10 @@ namespace BranchSdk {
             return AddStandardProperty(BranchJsonKey.SearchQuery.GetKey(), searchQuery);
         }
 
-        private BranchEvent AddStandardProperty(string propertyName, object propertyValue) {
+        private BranchEvent AddStandardProperty(string propertyName, string propertyValue) {
             if (propertyValue != null) {
                 try {
-                    this.standartProperties.Add(new JProperty(propertyName, propertyValue));
+                    this.standartProperties.Add(propertyName, JsonValue.CreateStringValue(propertyValue));
                 } catch (Exception e) {
                     Debug.WriteLine(e.StackTrace);
                 }
@@ -87,9 +87,9 @@ namespace BranchSdk {
             return this;
         }
 
-        public BranchEvent AddCustomDataProperty(String propertyName, String propertyValue) {
+        public BranchEvent AddCustomDataProperty(string propertyName, string propertyValue) {
             try {
-                this.customProperties.Add(new JProperty(propertyName, propertyValue));
+                this.customProperties.Add(propertyName, JsonValue.CreateStringValue(propertyValue));
             } catch (Exception e) {
                 Debug.WriteLine(e.StackTrace);
             }
