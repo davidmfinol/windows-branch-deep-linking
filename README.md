@@ -1,5 +1,6 @@
 
 
+
 # Branch Metrics Windows SDK
 
 ## Technical Documentation
@@ -20,8 +21,16 @@
     + [Adding the Branch SDK](#adding-the-branch-sdk)
     
   + [Integrating the Branch SDK](#integrating-the-branch-sdk)
+  + [Example code](#example-code)
+ 
+4. [**Configuring a Win32 App**](#3---configuring-a-windows-app-for-deep-linking)
+  + [Adding the Branch SDK to a Windows Solution](#adding-the-branch-sdk-to-a-windows-solution)
+    + [Adding the Branch SDK](#adding-the-branch-sdk)
+    
+  + [Integrating the Branch SDK](#integrating-the-branch-sdk)
+  + [Example code](#example-code)
 
-4. [**Branch SDK Method Reference**](#4---branch-sdk-method-reference)  
+5. [**Branch SDK Method Reference**](#4---branch-sdk-method-reference)  
   + [Initialize Branch](#initialize-Branch)
   + [Retrieve install (install only) parameters](#retrieve-install-install-only-parameters)  
   + [Persistent identities](#persistent-identities)
@@ -32,6 +41,13 @@
   + [Check a reward balance](#check-a-reward-balance)
   + [Redeem all or some of the reward balance](redeem-all-or-some-of-the-reward-balance)
   + [Get credit history](#get-credit-history)
+
+6. [**Using of COM Library**](#4---using-of-com-library)  
+  + [Initialize COM](#initialize-com)
+  + [COM Branch class](#com-branch-class)  
+  + [Using of COM Branch objects](#using-of-com-branch-objects)
+  + [Using of COM Branch callbacks](#using-of-com-branch-callbacks)
+  + [Examples](#examples)
 
 ___
 
@@ -96,7 +112,7 @@ First need add Newtonsoft.Json from NuGet
 #### **Adding the Branch SDK**
 
 1. Clone this repository to the local machine: `https://github.com/BranchMetrics/branch-windows-sdk.git`
-2. Add the `branch_debug_0.0.3` or `branch_0.0.3` libary to project from DLLs folder
+2. Add the `branch_debug_0.0.6` or `branch_0.0.6` libary to project from DLLs folder
 
 ___
 
@@ -190,231 +206,46 @@ ___
 	* `Branch.I.SetRetryInterval(int retryInterval);` - That method is set retry interval between request retries
 	* `Branch.I.SetRequestMetadata(string key, string value)` - That method is set common metadata for all requests
 	* `Branch.I.DisableTracking(bool disableTracking);` - This method determines whether it is possible to use user data **(Many functions will not be available if tracking is disabled)**
+___
+### Example code
 
-**IV. Add Branch calls to MainPage.xaml.cs**  
+To help you get started, we have provided this example for learning how to to write Branch UWP projects - [UWP Example](https://bitbucket.org/antonargunov/branch-windows-sdk/src/master/Testbed-Windows-UWP/)
 
-Below is an example of usage BranchSdk in Universal App
+## 4 - Configuring a Win32 App
 
-```csharp
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainPage : Page
-    {
-        public MainPage()
-        {
-            this.InitializeComponent();
-            Main();
-        }
+### Adding the Branch SDK to a Windows Solution
+ 
+#### **Adding the Branch SDK**
 
-        public void Main() {
-            Task.Run(async () => {
-                await BranchConfigManager.LoadAll();
-                await LibraryAdapter.GetPrefHelper().LoadAll();
+1. Clone this repository to the local machine: `https://github.com/BranchMetrics/branch-windows-sdk.git`
+2. Add the `branch_win32_debug_0.0.6` or `branch_win32_0.0.6` libary to project from DLLs folder
 
-                Branch.GetTestInstance();
-                Branch.I.InitSession(new BranchInitCallbackWrapper(async (parameters, error) => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Init session, parameters: ");
-                    foreach (string key in parameters.Keys) {
-                        lines.Add(key + " - " + parameters[key]);
-                    }
-                    await Dispatcher.RunAsync(CoreDispatcherPriority.High, () => {
-                        AddLog(lines);
-                    });
-                }));
-            });
-        }
-
-        private void OnCalleventClicked(object sender, RoutedEventArgs e) {
-            BranchEvent ev = new BranchEvent("test_custom_events")
-                    .SetDescription("Test description")
-                    .SetTransactionID("322")
-                    .AddCustomDataProperty("TestProperty", "TestValue");
-            ev.LogEvent();
-        }
-
-        private void OnIdentityClicked(object sender, RoutedEventArgs e) {
-            Branch.I.SetIdentity("User1488", async (referringParams, error) => {
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Set identity, response: " + referringParams.ToString());
-                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                    AddLog(lines);
-                });
-            });
-        }
-
-        private void OnGetShortLinkClicked(object sender, RoutedEventArgs e) {
-            BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
-                   .SetCanonicalIdentifier("item/12345")
-                   .SetCanonicalUrl("https://branch.io/deepviews")
-                   .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
-                   .SetLocalIndexMode(BranchUniversalObject.ContentIndexModes.PUBLIC)
-                   .SetTitle("My Content Title")
-                   .SetContentDescription("my_product_description1")
-                   .SetContentImageUrl("https://example.com/mycontent-12345.png")
-                   .SetContentExpiration(DateTime.UtcNow)
-                   .SetContentImageUrl("https://test_img_url")
-                   .AddKeyWord("My_Keyword1")
-                   .AddKeyWord("My_Keyword2")
-                   .SetContentMetadata(
-                        new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
-                   );
-
-            BranchLinkProperties linkProperties = new BranchLinkProperties()
-                     .AddTag("Tag1")
-                     .SetChannel("Sharing_Channel_name")
-                     .SetFeature("my_feature_name")
-                     .AddControlParameter("$android_deeplink_path", "custom/path/*")
-                     .AddControlParameter("$ios_url", "http://example.com/ios")
-                     .SetDuration(100);
-
-            Task.Run(async () => {
-                string url = branchUniversalObject.GetShortURL(linkProperties);
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Short url: " + url);
-                    AddLog(lines);
-                });
-            });
-        }
-
-        private void OnLogoutClicked(object sender, RoutedEventArgs e) {
-            Branch.I.Logout((logout, error) => {
-                Task.Run(async () => {
-                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                        List<string> lines = new List<string>();
-                        lines.Add("Logout status: " + logout);
-                        lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                        AddLog(lines);
-                    });
-                });
-            });
-        }
-
-        private void OnGetCreditsClicked(object sender, RoutedEventArgs e) {
-            Branch.I.LoadRewards(async (changed, error) => {
-                int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Credits count: " + credits);
-                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                    AddLog(lines);
-                });
-            });
-        }
-
-        private void OnRedeemFiveClicked(object sender, RoutedEventArgs e) {
-            Branch.I.RedeemRewards(5, async (changed, error) => {
-                int credits = LibraryAdapter.GetPrefHelper().GetCreditCount();
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    lines.Add("Credits count: " + credits);
-                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                    AddLog(lines);
-                });
-            });
-        }
-
-        private void OnBuyWithMetadataClicked(object sender, RoutedEventArgs e) {
-            JObject parameters = new JObject();
-            parameters.Add("name", "Alex");
-            parameters.Add("boolean", true);
-            parameters.Add("int", 1);
-            parameters.Add("double", 0.13415512301);
-
-            Branch.I.UserCompletedAction("buy", parameters);
-        }
-
-        private void OnGetCreditHistoryClicked(object sender, RoutedEventArgs e) {
-            Branch.I.GetCreditHistory(async (response, error) => {
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.High, () => {
-                    List<string> lines = new List<string>();
-                    if(response != null) {
-                        foreach(JObject prop in response) {
-                            JObject transaction = prop["transaction"].Value<JObject>();
-                            StringBuilder sb = new StringBuilder();
-                            sb.Append(transaction["date"].Value<string>() + " - ");
-                            sb.Append(transaction["bucket"].Value<string>() + ", amount: ");
-                            sb.Append(transaction["amount"].Value<int>());
-                            lines.Add(sb.ToString());
-                        }
-                    }
-                    lines.Add("Error: " + (error != null ? error.GetMessage() : "no errors"));
-                    AddLog(lines);
-                });
-            });
-        }
-
-        private void OnShareClicked(object sender, RoutedEventArgs e) {
-            BranchUniversalObject branchUniversalObject = new BranchUniversalObject()
-                   .SetCanonicalIdentifier("item/12345")
-                   .SetCanonicalUrl("https://branch.io/deepviews")
-                   .SetContentIndexingMode(BranchUniversalObject.ContentIndexModes.PRIVATE)
-                   .SetLocalIndexMode(BranchUniversalObject.ContentIndexModes.PUBLIC)
-                   .SetTitle("My Content Title")
-                   .SetContentDescription("my_product_description1")
-                   .SetContentImageUrl("https://example.com/mycontent-12345.png")
-                   .SetContentExpiration(DateTime.UtcNow)
-                   .SetContentImageUrl("https://test_img_url")
-                   .AddKeyWord("My_Keyword1")
-                   .AddKeyWord("My_Keyword2")
-                   .SetContentMetadata(
-                        new BranchContentMetadata().AddCustomMetadata("testkey", "testvalue")
-                   );
-
-            BranchLinkProperties linkProperties = new BranchLinkProperties()
-                     .AddTag("Tag1")
-                     .SetChannel("Sharing_Channel_name")
-                     .SetFeature("my_feature_name")
-                     .AddControlParameter("$android_deeplink_path", "custom/path/*")
-                     .AddControlParameter("$ios_url", "http://example.com/ios")
-                     .SetDuration(100);
-
-            BranchShareSheetStyle style = new BranchShareSheetStyle("Test share title", "Test share message body");
-            style.SetDefaultUrl("https://branch.io/");
-            branchUniversalObject.ShowShareSheet(DataTransferManager.GetForCurrentView(), Dispatcher, linkProperties, style);
-        }
-
-        private void AddLog(string text) {
-            TextBox logText = new TextBox();
-            logText.FontSize = 20;
-            logText.FontWeight = FontWeights.Normal;
-            logText.TextWrapping = TextWrapping.Wrap;
-            logText.IsReadOnly = true;
-            logText.AcceptsReturn = true;
-            logText.BorderThickness = new Thickness(0);
-            logText.Margin = new Thickness(0, 3, 0, 3);
-            logText.Text = text;
-
-            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-        }
-
-        private void AddLog(List<string> lines) {
-            TextBox logText = new TextBox();
-            logText.FontSize = 20;
-            logText.FontWeight = FontWeights.Normal;
-            logText.TextWrapping = TextWrapping.Wrap;
-            logText.IsReadOnly = true;
-            logText.AcceptsReturn = true;
-            logText.BorderThickness = new Thickness(0);
-            logText.Margin = new Thickness(0, 3, 0, 3);
-
-            int i = 0;
-            foreach (string line in lines) {
-                logText.Text += line + (i < lines.Count - 1 ? Environment.NewLine : string.Empty);
-                i++;
-            }
-
-            (this.FindName("LogStack") as StackPanel).Children.Add(logText);
-        }
-    }
-}
-```
 ___
 
-## 4 - Branch SDK Method Reference
+### Integrating the Branch SDK
+
+**I. Create project in visual studio**  
+
+* Open Visual Studio and create a new Console App (.NET Framework) project
+
+**II. Configuring**
+
+* In `Output build` create folder `Configs` and in it folder create two text files (.txt) with names `live_branch_key.txt` and `test_branch_key.txt` and fill they with branch keys from your app dashboard
+* You may configure your app with that methods:
+	* `Branch.I.SetDebug(bool isDebug);` - If `isDebug` is true then app will use `Test` Branch key if specified. Otherwise, the app will use the `Live` Branch key.
+	* `Branch.I.SetNetworkTimeout(int timeout);` - That method is set timeout for all requests
+	* `Branch.I.SetMaxRetries(int maxRetries);` - That method is set max retries for failed requests 
+	* `Branch.I.SetRetryInterval(int retryInterval);` - That method is set retry interval between request retries
+	* `Branch.I.SetRequestMetadata(string key, string value)` - That method is set common metadata for all requests
+	* `Branch.I.DisableTracking(bool disableTracking);` - This method determines whether it is possible to use user data **(Many functions will not be available if tracking is disabled)**
+___
+### Example code
+
+To help you get started, we have provided this example for learning how to to write Branch UWP projects - [Win32 Example](https://bitbucket.org/antonargunov/branch-windows-sdk/src/master/Testbed-Windows-Win32/)
+
+
+## 5 - Branch SDK Method Reference
+
 
 #### Initialize Branch
 
@@ -428,7 +259,7 @@ Branch.I.InitSession(new BranchInitCallbackWrapper((parameters, error) => { }));
 If you ever want to access the original session params (the parameters passed in for the first install event only), you can use this line. This is useful if you only want to reward users who newly installed the app from a referral link or something.
 
 ```csharp
-JObject installParams = Branch.I.GetFirstParams();
+var installParams = Branch.I.GetFirstParams();
 ```
 
 #### Persistent identities
@@ -705,9 +536,9 @@ using namespace branch_0_0_6;
 ```cpp
 #include <thread>
 ```
- _
+ ___
 
-## 2 - Using of COM Library
+## 6 - Using of COM Library
 
 ### Initialize COM
 To initialize the use of a COM, paste this code into your main class.
@@ -807,27 +638,27 @@ comLinkProperties->MatchDuration = 100;
 
  - Init session delegate
 ```cpp
-   void (ICOMBranchUniversalObject buo, ICOMBranchLinkProperties link, string error);
+   void (ICOMBranchUniversalObject buo, ICOMBranchLinkProperties link, LPTSTR error);
 ```
  - Get Reward History delegate
 ```cpp
-   void (string json, string error);
+   void (string json, LPTSTR error);
 ```
  - Get Rewards delegate
 ```cpp
-   void (bool changed, string error);
+   void (bool changed, LPTSTR error);
 ```
  - Logout delegate
 ```cpp
-   void (bool logoutSuccess, string error);
+   void (bool logoutSuccess, LPTSTR error);
 ```
  - Redeem Rewards delegate
 ```cpp
-   void (bool changed, string error);
+   void (bool changed, LPTSTR error);
 ```
  - Identity user delegate
 ```cpp
-   void (string referrinParams, string error);
+   void (string referrinParams, LPTSTR error);
 ```
  - User Completed Action delegate
 ```cpp
@@ -840,7 +671,7 @@ comLinkProperties->MatchDuration = 100;
 void __stdcall InitCallback(
 	ICOMBranchUniversalObjectPtr comBUO,
 	ICOMBranchLinkPropertiesPtr comLinkProperties,
-	_bstr_t error) {
+	LPTSTR error) {
 	//your code here
 }
 
@@ -854,73 +685,7 @@ int main()
 	CoUninitialize();
 }
 ```
-### Example full code
-```cpp
-#include "pch.h"
-#include <iostream>
-#include <thread>
-#import "..\Testbed-Windows-COM\Debug\branch_debug_0.0.6.tlb" 
-
-using namespace branch_debug_0_0_4;
-
-bool sessionInited = false;
-
-void __stdcall InitCallback(ICOMBranchUniversalObjectPtr comBUO,
-	ICOMBranchLinkPropertiesPtr comLinkProperties,
-	_bstr_t error) {
-	std::cout << "init session callback :) \n\r";
-	std::cout << "title link: " + comBUO->Title + "\n\r";
-	std::cout << "channel link: " + comLinkProperties->Channel + "\n\r";
-
-	sessionInited = true;
-}
-
-void init(ICOMBranchPtr comBranch, ICOMBranchUniversalObjectPtr buo, ICOMBranchLinkPropertiesPtr link)
-{
-	comBranch->InitSession_3(&InitCallback, "");
-	std::cout << "init session \n\r";
-
-	while (!sessionInited) Sleep(10);
-
-	_bstr_t linkStr = buo->GetShortURL(link);
-	std::cout << "generated link: " + linkStr + " \n\r";
-}
-
-int main()
-{
-	HRESULT hr = CoInitialize(NULL);
-
-	ICOMBranchContentMetadataPtr comMetadata(__uuidof(COMBranchContentMetadata));
-	comMetadata->AddCustomMetadata("testkey", "testvalue");
-
-	ICOMBranchUniversalObjectPtr comBUO(__uuidof(COMBranchUniversalObject));
-	comBUO->CanonicalIdentifier = "item/12345";
-	comBUO->CanonicalUrl = "";
-	comBUO->ContentIndexMode = "PRIVATE";
-	comBUO->LocalIndexMode = "PUBLIC";
-	comBUO->Title = "My Content Title";
-	comBUO->ContentDescription = "my_product_description1";
-	comBUO->ImageUrl = "https://example.com/mycontent-12345.png";
-	comBUO->AddKeyword("My_Keyword1");
-	comBUO->AddKeyword("My_Keyword2");
-
-	ICOMBranchLinkPropertiesPtr comLinkProperties(__uuidof(COMBranchLinkProperties));
-	comLinkProperties->AddTag("Tag1");
-	comLinkProperties->Channel = "Sharing_Channel_name";
-	comLinkProperties->Feature = "my_feature_name";
-	comLinkProperties->AddControlParam("$android_deeplink_path", "custom/path/*");
-	comLinkProperties->AddControlParam("$ios_url", "http://example.com/ios");
-	comLinkProperties->MatchDuration = 100;
-
-	ICOMBranchPtr comBranch(__uuidof(COMBranch));
-	comBranch->GetBranchInstance(false, "key_test_gcy1q6txmcqHyqPqacgBZpbiush0RSDs");
-	comBranch->SetNetworkTimeout(3000);
-
-	std::thread t1(init, comBranch, comBUO, comLinkProperties);
-	t1.join();
-
-	CoUninitialize();
-}
-```
-___
-
+### Examples
+To help you get started, we have provided this examples for learning how to to write COM Projects.
+1. [Example of using COM UWP](https://bitbucket.org/antonargunov/branch-windows-sdk/src/master/Testbed-Windows-COM-UWP/)
+2. [Example of using COM Win32](https://bitbucket.org/antonargunov/branch-windows-sdk/src/master/Testbed-Windows-COM-Win32/)

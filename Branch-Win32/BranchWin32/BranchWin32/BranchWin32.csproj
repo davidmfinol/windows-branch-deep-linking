@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{CE13BCE6-72E5-406F-AFFF-4CCE9B1685C9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BranchSdk</RootNamespace>
+    <AssemblyName>branch_win32_debug_0.0.6</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\..\DLLs\Win32\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\DLLs\Win32\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Branch.cs" />
+    <Compile Include="BranchConfigManager.cs" />
+    <Compile Include="BranchContentMetadata.cs" />
+    <Compile Include="BranchDeviceInfo.cs" />
+    <Compile Include="BranchError.cs" />
+    <Compile Include="BranchEvent.cs" />
+    <Compile Include="BranchLinkProperties.cs" />
+    <Compile Include="BranchPrefHelper.cs" />
+    <Compile Include="BranchShareLinkBuilder.cs" />
+    <Compile Include="BranchShareLinkManager.cs" />
+    <Compile Include="BranchShareSheetStyle.cs" />
+    <Compile Include="BranchShortLinkBuilder.cs" />
+    <Compile Include="BranchSystemObserver.cs" />
+    <Compile Include="BranchTrackingController.cs" />
+    <Compile Include="BranchUniversalObject.cs" />
+    <Compile Include="BranchUrlBuilder.cs" />
+    <Compile Include="BranchUtil.cs" />
+    <Compile Include="COMWrapper\COMBranch.cs" />
+    <Compile Include="COMWrapper\COMBranchContentMetadata.cs" />
+    <Compile Include="COMWrapper\COMBranchLinkProperties.cs" />
+    <Compile Include="COMWrapper\COMBranchUniversalObject.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranch.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchContentMetadata.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchLinkProperties.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchUniversalObject.cs" />
+    <Compile Include="CrossPlatform\LibraryAdapter.cs" />
+    <Compile Include="Enum\BranchCondition.cs" />
+    <Compile Include="Enum\BranchContentSchema.cs" />
+    <Compile Include="Enum\BranchCurrencyType.cs" />
+    <Compile Include="Enum\BranchDefines.cs" />
+    <Compile Include="Enum\BranchEnumUtils.cs" />
+    <Compile Include="Enum\BranchProductCategory.cs" />
+    <Compile Include="Enum\BranchStandartEvent.cs" />
+    <Compile Include="Interface\IBranchPrefHelper.cs" />
+    <Compile Include="Interface\IBranchSystemObserver.cs" />
+    <Compile Include="JsonUtility\MiniJSON.cs" />
+    <Compile Include="Net\BranchRequestHelper.cs" />
+    <Compile Include="Net\BranchServerRequestQueue.cs" />
+    <Compile Include="Net\BranchWebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Net\Requests\BranchRequestResponse.cs" />
+    <Compile Include="Net\Requests\BranchServerActionCompleted.cs" />
+    <Compile Include="Net\Requests\BranchServerCreateUrl.cs" />
+    <Compile Include="Net\Requests\BranchServerGetRewardHistory.cs" />
+    <Compile Include="Net\Requests\BranchServerGetRewards.cs" />
+    <Compile Include="Net\Requests\BranchServerIdentifyUser.cs" />
+    <Compile Include="Net\Requests\BranchServerLogEvent.cs" />
+    <Compile Include="Net\Requests\BranchServerLogout.cs" />
+    <Compile Include="Net\Requests\BranchServerRedeemRewards.cs" />
+    <Compile Include="Net\Requests\BranchServerRegisterInstall.cs" />
+    <Compile Include="Net\Requests\BranchServerRegisterOpen.cs" />
+    <Compile Include="Net\Requests\BranchServerRequest.cs" />
+    <Compile Include="Net\Requests\BranchTestRequest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\AssemblyUtils.cs" />
+    <Compile Include="Utils\CpuID.cs" />
+    <Compile Include="Utils\DateTimeUtils.cs" />
+    <Compile Include="Utils\EnumUtils.cs" />
+    <Compile Include="Utils\NetUtils.cs" />
+    <Compile Include="Utils\ObjectUtils.cs" />
+    <Compile Include="Utils\WindowsUtils.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

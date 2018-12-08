@@ -2,6 +2,7 @@ Branch Windows SDK change log
 
 - 0.0.6
   * Adding COM interface
+  * Adding win32 version
   * Updating readme.md
 
 - 0.0.5
