@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BranchSdk</RootNamespace>
-    <AssemblyName>branch_win32_debug_0.0.6</AssemblyName>
+    <AssemblyName>branch_win32_debug_0.1.0</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

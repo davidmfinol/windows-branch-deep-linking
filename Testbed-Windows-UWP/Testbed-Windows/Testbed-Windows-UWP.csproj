@@ -149,9 +149,8 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="branch_debug_0.0.6, Version=0.0.6.0, Culture=neutral, PublicKeyToken=8c9708129949bb2c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DLLs\UWP\Debug\branch_debug_0.0.6.dll</HintPath>
+    <Reference Include="branch_debug_0.1.0">
+      <HintPath>..\..\DLLs\UWP\Debug\branch_debug_0.1.0.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

@@ -55,7 +55,7 @@ ___
 
 ### SDK Details
 
-Current version: **0.0.3**
+Current version: **0.1.0**
 
 ### Resources
 - This document - *Start Here*
@@ -112,7 +112,7 @@ First need add Newtonsoft.Json from NuGet
 #### **Adding the Branch SDK**
 
 1. Clone this repository to the local machine: `https://github.com/BranchMetrics/branch-windows-sdk.git`
-2. Add the `branch_debug_0.0.6` or `branch_0.0.6` libary to project from DLLs folder
+2. Add the `branch_debug_0.1.0` or `branch_0.1.0` libary to project from DLLs folder
 
 ___
 
@@ -218,7 +218,7 @@ To help you get started, we have provided this example for learning how to to wr
 #### **Adding the Branch SDK**
 
 1. Clone this repository to the local machine: `https://github.com/BranchMetrics/branch-windows-sdk.git`
-2. Add the `branch_win32_debug_0.0.6` or `branch_win32_0.0.6` libary to project from DLLs folder
+2. Add the `branch_win32_debug_0.1.0` or `branch_win32_0.1.0` libary to project from DLLs folder
 
 ___
 
@@ -518,19 +518,19 @@ This class is need for customize "Link sharing"
 
  1. Build solution
  2. Copy COM Library from
-**..\BranchWindowsSdk\DLLs\Debug\branch_debug_0.0.6.tlb** or 
-**..\BranchWindowsSdk\DLLs\Release\branch_0.0.6.tlb** to 
+**..\BranchWindowsSdk\DLLs\Debug\branch_debug_0.1.0.tlb** or 
+**..\BranchWindowsSdk\DLLs\Release\branch_0.1.0.tlb** to 
 **..\Your Project Folder\Your Project Name\Debug** or 
 **..\Your Project Folder\Your Project Name\Release**
  3. Import library 
 ```cpp
-#import "..\Your Project Name\Debug\branch_debug_0.0.6.tlb" 
-using namespace branch_debug_0_0_6;
+#import "..\Your Project Name\Debug\branch_debug_0.1.0.tlb" 
+using namespace branch_debug_0.1.0;
 ```
 or
 ```cpp
-#import "..\Your Project Name\Debug\branch_0.0.6.tlb" 
-using namespace branch_0_0_6;
+#import "..\Your Project Name\Debug\branch_0.1.0.tlb" 
+using namespace branch_0.1.0;
 ```
  4. Include ```<thread>``` 
 ```cpp
