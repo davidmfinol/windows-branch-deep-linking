@@ -48,10 +48,10 @@ namespace BranchSdk {
         }
 
         public string GetOS() {
-            return "Windows";
-
-            AnalyticsVersionInfo ai = AnalyticsInfo.VersionInfo;
-            return ai.DeviceFamily;
+            string deviceFamilyVersion = AnalyticsInfo.VersionInfo.DeviceFamilyVersion;
+            ulong version = ulong.Parse(deviceFamilyVersion);
+            ulong major = (version & 0xFFFF000000000000L) >> 48;
+            return $"Windows {major}";
         }
 
         public string GetRawOSVersion() {

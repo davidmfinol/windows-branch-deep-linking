@@ -66,16 +66,11 @@
                 case RequestPath.RegisterInstall: return "v1/install";
                 case RequestPath.RegisterClose: return "v1/close";
                 case RequestPath.RegisterOpen: return "v1/open";
-                case RequestPath.RegisterView: return "v1/register-view";
                 case RequestPath.GetCredits: return "v1/credits/";
                 case RequestPath.GetCreditHistory: return "v1/credithistory";
                 case RequestPath.CompletedAction: return "v1/event";
                 case RequestPath.IdentifyUser: return "v1/profile";
                 case RequestPath.Logout: return "v1/logout";
-                case RequestPath.GetReferralCode: return "v1/referralcode";
-                case RequestPath.ValidateReferralCode: return "v1/referralcode/";
-                case RequestPath.ApplyReferralCode: return "v1/applycode/";
-                case RequestPath.DebugConnect: return "v1/debug/connect";
                 case RequestPath.ContentEvent: return "v1/content-events";
                 case RequestPath.TrackStandardEvent: return "v2/event/standard";
                 case RequestPath.TrackCustomEvent: return "v2/event/custom";
@@ -219,6 +214,7 @@
                 case BranchJsonKey.InstantApp: return "INSTANT_APP";
                 case BranchJsonKey.NativeApp: return "FULL_APP";
 
+                case BranchJsonKey.CustomerEventAlias: return "customer_event_alias";
                 case BranchJsonKey.TransactionID: return "transaction_id";
                 case BranchJsonKey.Currency: return "currency";
                 case BranchJsonKey.Revenue: return "revenue";
@@ -228,6 +224,9 @@
                 case BranchJsonKey.Affiliation: return "affiliation";
                 case BranchJsonKey.Description: return "description";
                 case BranchJsonKey.SearchQuery: return "search_query";
+
+                case BranchJsonKey.PluginType: return "plugin_type";
+                case BranchJsonKey.PluginVersion: return "plugin_version";
 
                 case BranchJsonKey.Name: return "name";
                 case BranchJsonKey.CustomData: return "custom_data";

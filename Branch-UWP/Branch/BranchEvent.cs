@@ -10,11 +10,13 @@ namespace BranchSdk {
     public class BranchEvent {
         private readonly string eventName;
         private readonly bool isStandartEvent;
+        private readonly JsonObject topLevelProperties;
         private readonly JsonObject standartProperties;
         private readonly JsonObject customProperties;
         private readonly List<BranchUniversalObject> buoList;
 
         public BranchEvent(BranchStandartEvent branchStandartEvent) {
+            topLevelProperties = new JsonObject();
             standartProperties = new JsonObject();
             customProperties = new JsonObject();
             this.eventName = branchStandartEvent.GetEventName();
@@ -23,6 +25,7 @@ namespace BranchSdk {
         }
 
         public BranchEvent(string eventName) {
+            topLevelProperties = new JsonObject();
             standartProperties = new JsonObject();
             customProperties = new JsonObject();
             this.eventName = eventName;
@@ -31,11 +34,17 @@ namespace BranchSdk {
         }
 
         public BranchEvent(string eventName, bool isStandartEvent) {
+            topLevelProperties = new JsonObject();
             standartProperties = new JsonObject();
             customProperties = new JsonObject();
             this.eventName = eventName;
             this.isStandartEvent = isStandartEvent;
             buoList = new List<BranchUniversalObject>();
+        }
+
+        public BranchEvent SetCustomerEventAlias(string customerEventAlias)
+        {
+            return AddTopLevelProperty(BranchJsonKey.CustomerEventAlias.GetKey(), customerEventAlias);
         }
 
         public BranchEvent SetTransactionID(string transactionID) {
@@ -73,7 +82,7 @@ namespace BranchSdk {
         public BranchEvent SetSearchQuery(string searchQuery) {
             return AddStandardProperty(BranchJsonKey.SearchQuery.GetKey(), searchQuery);
         }
-
+            
         private BranchEvent AddStandardProperty(string propertyName, string propertyValue) {
             if (propertyValue != null) {
                 try {
@@ -83,6 +92,16 @@ namespace BranchSdk {
                 }
             } else {
                 this.standartProperties.Remove(propertyName);
+            }
+            return this;
+        }
+
+        private BranchEvent AddTopLevelProperty(string propertyName, string propertyValue)
+        {
+            if (!this.topLevelProperties.ContainsKey(propertyName)) {
+                this.topLevelProperties.Add(propertyName, JsonValue.CreateStringValue(propertyValue));
+            } else {
+                this.topLevelProperties.Remove(propertyName);
             }
             return this;
         }
@@ -108,7 +127,7 @@ namespace BranchSdk {
 
         public void LogEvent() {
             string requestPath = isStandartEvent ? RequestPath.TrackStandardEvent.GetPath() : RequestPath.TrackCustomEvent.GetPath();
-            BranchServerRequest request = new BranchServerLogEvent(requestPath, eventName, isStandartEvent, buoList, standartProperties, customProperties);
+            BranchServerRequest request = new BranchServerLogEvent(requestPath, eventName, isStandartEvent, buoList, standartProperties, topLevelProperties, customProperties);
             request.RequestType = RequestTypes.POST;
 
             BranchServerRequestQueue.AddRequest(request);

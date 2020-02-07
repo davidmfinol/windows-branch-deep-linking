@@ -330,5 +330,14 @@ namespace COMWrapper
                 comCallback.Invoke();
             });
         }
+
+        public unsafe void SendCommerceEvent(ICOMBranchCommerceEvent commerceEvent, string metadata, void* callback)
+        {
+            Branch.I.SendCommerceEvent((commerceEvent as COMBranchCommerceEvent).ParseCommerceEvent(), JsonObject.Parse(metadata), () => {
+                COMUserCompletedActionCallback comCallback
+                    = Marshal.GetDelegateForFunctionPointer<COMUserCompletedActionCallback>((IntPtr)callback);
+                comCallback.Invoke();
+            });
+        }
     }
 }

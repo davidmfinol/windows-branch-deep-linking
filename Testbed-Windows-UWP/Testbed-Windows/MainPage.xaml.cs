@@ -48,9 +48,11 @@ namespace TestbedWindows
         }
 
         public void Main() {
+
             Task.Run(async () => {
                 await BranchConfigManager.LoadAll();
                 await LibraryAdapter.GetPrefHelper().LoadAll();
+                LibraryAdapter.GetPrefHelper().SetDeveloperIdentity("Branch UWP Test App");
 
                 Branch.GetTestInstance();
                 Branch.I.InitSession(new BranchInitCallbackWrapper(async (buo, link, error) => {

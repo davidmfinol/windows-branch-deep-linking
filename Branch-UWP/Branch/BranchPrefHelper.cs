@@ -34,12 +34,14 @@ namespace BranchSdk {
             RetryInterval,
             RequestMetadata,
             TrackingDisabled,
-            AnalyticsData
+            AnalyticsData,
+            DeveloperIdentity
         }
 
         private Dictionary<PrefKeyType, string> PrefKeyMap = new Dictionary<PrefKeyType, string>() {
             { PrefKeyType.SessionId, "branch_win_session_id" },
             { PrefKeyType.IdentityId, "branch_win_identity_id" },
+            { PrefKeyType.DeveloperIdentity, "branch_win_developer_identity" },
             { PrefKeyType.BranchKey, "branch_win_branch_key" },
             { PrefKeyType.DeviceFingerPrintId, "branch_device_finger_print_id_key" },
             { PrefKeyType.UserUrl, "branch_user_url_key" },
@@ -67,6 +69,7 @@ namespace BranchSdk {
 
         private string sessionId;
         private string identity;
+        private string developerIdentity;
         private string identityId;
         private string branchKey;
         private string deviceFingerPrintId;
@@ -97,10 +100,15 @@ namespace BranchSdk {
 
         public string GetIdentity() {
             return identity;
-        }
-
+        } 
+       
         public string GetIdentityId() {
             return identityId;
+        }
+
+        public string GetDeveloperIdentity()
+        {
+            return developerIdentity;
         }
 
         public string GetBranchKey() {
@@ -178,6 +186,11 @@ namespace BranchSdk {
 
         public void SetIdentityId(string identityId) {
             this.identityId = identityId;
+        }
+
+        public void SetDeveloperIdentity(string developerIdentity)
+        {
+            this.developerIdentity = developerIdentity;
         }
 
         public void SetBranchKey(string branchKey) {
@@ -299,6 +312,7 @@ namespace BranchSdk {
         public async Task LoadAll() {
             sessionId = await Load(PrefKeyType.SessionId, string.Empty);
             identity = await Load(PrefKeyType.Identity, string.Empty);
+            identity = await Load(PrefKeyType.DeveloperIdentity, string.Empty);
             identityId = await Load(PrefKeyType.IdentityId, string.Empty);
             branchKey = await Load(PrefKeyType.BranchKey, string.Empty);
             deviceFingerPrintId = await Load(PrefKeyType.DeviceFingerPrintId, string.Empty);
@@ -362,6 +376,7 @@ namespace BranchSdk {
         public async Task SaveAll() {
             await Save(PrefKeyType.SessionId, sessionId);
             await Save(PrefKeyType.Identity, identity);
+            await Save(PrefKeyType.DeveloperIdentity, developerIdentity);
             await Save(PrefKeyType.IdentityId, identityId);
             await Save(PrefKeyType.BranchKey, branchKey);
             await Save(PrefKeyType.DeviceFingerPrintId, deviceFingerPrintId);

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BranchSdk</RootNamespace>
-    <AssemblyName>branch_debug_0.1.0</AssemblyName>
+    <AssemblyName>branch_debug_0.2.0</AssemblyName>
     <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17134.0</TargetPlatformVersion>
@@ -27,6 +27,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -109,6 +111,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Branch.cs" />
+    <Compile Include="BranchCommerceEvent.cs" />
     <Compile Include="BranchConfigManager.cs" />
     <Compile Include="BranchContentMetadata.cs" />
     <Compile Include="BranchDeviceInfo.cs" />
@@ -116,6 +119,7 @@
     <Compile Include="BranchEvent.cs" />
     <Compile Include="BranchLinkProperties.cs" />
     <Compile Include="BranchPrefHelper.cs" />
+    <Compile Include="BranchProduct.cs" />
     <Compile Include="BranchShareLinkBuilder.cs" />
     <Compile Include="BranchShareLinkManager.cs" />
     <Compile Include="BranchShareSheetStyle.cs" />
@@ -126,12 +130,16 @@
     <Compile Include="BranchUrlBuilder.cs" />
     <Compile Include="BranchUtil.cs" />
     <Compile Include="COMWrapper\COMBranch.cs" />
+    <Compile Include="COMWrapper\COMBranchCommerceEvent.cs" />
     <Compile Include="COMWrapper\COMBranchContentMetadata.cs" />
     <Compile Include="COMWrapper\COMBranchLinkProperties.cs" />
+    <Compile Include="COMWrapper\COMBranchProduct.cs" />
     <Compile Include="COMWrapper\COMBranchUniversalObject.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchCommerceEvent.cs" />
     <Compile Include="COMWrapper\Interfaces\ICOMBranchLinkProperties.cs" />
     <Compile Include="COMWrapper\Interfaces\ICOMBranch.cs" />
     <Compile Include="COMWrapper\Interfaces\ICOMBranchContentMetadata.cs" />
+    <Compile Include="COMWrapper\Interfaces\ICOMBranchProduct.cs" />
     <Compile Include="COMWrapper\Interfaces\ICOMBranchUniversalObject.cs" />
     <Compile Include="CrossPlatform\LibraryAdapter.cs" />
     <Compile Include="Enum\BranchCondition.cs" />
@@ -168,6 +176,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.1.9</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime">
+      <Version>4.3.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

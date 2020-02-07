@@ -12,7 +12,7 @@ namespace BranchSdk.Net.Requests
 {
     public class BranchServerActionCompleted : BranchServerRequest
     {
-        public BranchServerActionCompleted(string action, JsonObject metadata)
+        public BranchServerActionCompleted(string action, BranchCommerceEvent commerceEvent, JsonObject metadata)
         {
             this.requestPath = Enum.RequestPath.CompletedAction.GetPath();
 
@@ -24,13 +24,18 @@ namespace BranchSdk.Net.Requests
                 post.Add(BranchJsonKey.LinkClickID.GetKey(), JsonValue.CreateStringValue(LibraryAdapter.GetPrefHelper().GetLinkClickId()));
             }
             post.Add(BranchJsonKey.Event.GetKey(), JsonValue.CreateStringValue(action));
+
             if (metadata != null) {
                 post.Add(BranchJsonKey.Metadata.GetKey(), metadata);
             }
 
+            if (commerceEvent != null) {
+                post.Add(BranchJsonKey.CommerceData.GetKey(), commerceEvent.GetCommerceJSONObject());
+            }
+
             SetPost(post);
 
-            if (string.IsNullOrEmpty(action) && action.ToLower().Equals("purchase")) {
+            if (string.IsNullOrEmpty(action) && action.ToLower().Equals(BranchStandartEvent.PURCHASE.GetEventName().ToLower()) && commerceEvent == null) {
                 Debug.WriteLine("Warning: You are sending a purchase event with our non-dedicated purchase function. Please see function sendCommerceEvent");
             }
         }

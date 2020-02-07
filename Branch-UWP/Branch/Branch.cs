@@ -98,8 +98,6 @@ namespace BranchSdk {
                 string lastBranchKey = LibraryAdapter.GetPrefHelper().GetBranchKey();
                 LibraryAdapter.GetPrefHelper().SetBranchKey(isLive ? BranchConfigManager.GetLiveBranchKey() : BranchConfigManager.GetTestBranchKey());
 
-                Debug.WriteLine(lastBranchKey);
-
                 if(!lastBranchKey.Equals(LibraryAdapter.GetPrefHelper().GetBranchKey())) {
                     LibraryAdapter.GetPrefHelper().ClearUserValues();
                 }
@@ -337,7 +335,16 @@ namespace BranchSdk {
 
         //TODO CHANGE CALLBACK
         public void UserCompletedAction(string action, JsonObject metadata, Action callback) {
-            BranchServerActionCompleted request = new BranchServerActionCompleted(action, metadata);
+            BranchServerActionCompleted request = new BranchServerActionCompleted(action, null, metadata);
+            request.RequestType = RequestTypes.POST;
+
+            BranchServerRequestQueue.AddRequest(request);
+            BranchServerRequestQueue.RunQueue();
+        }
+
+        public void SendCommerceEvent(BranchCommerceEvent commerceEvent, JsonObject metadata, Action callback)
+        {
+            BranchServerActionCompleted request = new BranchServerActionCompleted(BranchStandartEvent.PURCHASE.GetEventName(), commerceEvent, metadata);
             request.RequestType = RequestTypes.POST;
 
             BranchServerRequestQueue.AddRequest(request);

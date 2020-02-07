@@ -16,6 +16,7 @@ namespace BranchSdk
         int GetCreditCount(string bucket);
         string GetDeviceFingerPrintId();
         string GetIdentity();
+        string GetDeveloperIdentity();
         string GetIdentityId();
         string GetInstallParams();
         int GetIsReferrable();
@@ -37,6 +38,7 @@ namespace BranchSdk
         void SetCreditCount(string bucket, int count);
         void SetDeviceFingerPrintId(string deviceFingerPrintId);
         void SetIdentity(string identity);
+        void SetDeveloperIdentity(string developerIdentity);
         void SetIdentityId(string identityId);
         void SetInstallParams(string installParams);
         void SetIsReferrable();

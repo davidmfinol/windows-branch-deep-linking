@@ -56,10 +56,10 @@ namespace BranchSdk.Net.Requests {
 
             if (ApiVersion == BranchApiVersions.V2) {
                 JsonObject userData = new JsonObject();
-                BranchDeviceInfo.UpdateRequestWithUserData(userData);
+                BranchDeviceInfo.UpdateRequestWithV2Params(userData);
                 this.postData.Add(BranchJsonKey.UserData.GetKey(), userData);
             } else {
-                BranchDeviceInfo.UpdateRequestWithDeviceParams(this.postData);
+                BranchDeviceInfo.UpdateRequestWithV1Params(this.postData);
             }
 
             BranchRequestHelper.AddCommonParams(this.postData, LibraryAdapter.GetPrefHelper().GetBranchKey());

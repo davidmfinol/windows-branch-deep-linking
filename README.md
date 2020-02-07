@@ -298,7 +298,7 @@ ____
 
 ### Generating Branch links
 
-Branch links can be created in-app as well as many other ways. When they are, and setIdentity has been called to associate a User ID with the current user session, Branch links will be associated with that User ID.
+Branch links can be created in-app (as well as in many other ways - see: [Branch link creation guide](https://github.com/BranchMetrics/Branch-Integration-Guides/blob/master/url-creation-guide.md). When they are, and setIdentity has been called to associate a User ID with the current user session, Branch links will be associated with that User ID.
 
 ```csharp
 // you can access this data from any instance that installs or opens the app from this link

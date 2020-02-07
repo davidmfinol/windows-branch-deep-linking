@@ -43,6 +43,7 @@ namespace COMWrapper
         void UserCompletedAction(string action);
         unsafe void UserCompletedAction(string action, void* callback);
         unsafe void UserCompletedAction(string action, string metadata, void* callback);
+        unsafe void SendCommerceEvent(ICOMBranchCommerceEvent commerceEvent, string metadata, void* callback);
         void CancelShareLinkDialog();
         unsafe void GetCreditHistory(void* callback);
         unsafe void GetCreditHistory(string bucket, void* callback);

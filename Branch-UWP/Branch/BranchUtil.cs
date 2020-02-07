@@ -1,4 +1,5 @@
-﻿using Windows.Data.Json;
+﻿using BranchSdk.Utils;
+using Windows.Data.Json;
 
 namespace BranchSdk
 {
@@ -18,6 +19,16 @@ namespace BranchSdk
             }
             parameters.Add("source", JsonValue.CreateStringValue("windows")); //TODO: It's temp value
             return parameters;
+        }
+
+        public static string GetPluginVersion()
+        {
+            return AssemblyUtils.Version.ToString();
+        }
+
+        public static string GetPluginType()
+        {
+            return "C-Sharp";
         }
     }
 }
