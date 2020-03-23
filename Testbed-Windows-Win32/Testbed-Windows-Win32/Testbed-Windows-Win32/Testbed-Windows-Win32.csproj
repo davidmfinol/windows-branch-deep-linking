@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="branch_debug_win32_0.2.0">
-      <HintPath>..\..\..\DLLs\Win32\Debug\branch_debug_win32_0.2.0.dll</HintPath>
+    <Reference Include="branch_win32_debug_0.2.1">
+      <HintPath>..\..\..\DLLs\Win32\Debug\branch_win32_debug_0.2.1.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

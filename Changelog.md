@@ -1,5 +1,8 @@
 Branch Windows SDK change log
 
+- 0.2.1
+  * Changing value "sdk" to "c-sharp"
+
 - 0.2.0
   * Adding event CommerceEvent
   * Updating SystemObserver to receive correct os version

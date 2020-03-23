@@ -38,7 +38,7 @@ namespace BranchSdk {
             System.Version version = AssemblyUtils.Version;
             string sdkVersion = string.Format("{0}.{1}.{2}", version.Major, version.Minor, version.Build);
 
-            requestObj.Add(BranchJsonKey.SDK.GetKey(), JsonValue.CreateStringValue("native"));
+            requestObj.Add(BranchJsonKey.SDK.GetKey(), JsonValue.CreateStringValue("c-sharp"));
             requestObj.Add(BranchJsonKey.SdkVersion.GetKey(), JsonValue.CreateStringValue(sdkVersion));
 
             if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), JsonValue.CreateStringValue(os));
@@ -59,7 +59,7 @@ namespace BranchSdk {
             System.Version version = AssemblyUtils.Version;
             string sdkVersion = string.Format("{0}.{1}.{2}", version.Major, version.Minor, version.Build);
 
-            requestObj.Add(BranchJsonKey.SDK.GetKey(), JsonValue.CreateStringValue("native"));
+            requestObj.Add(BranchJsonKey.SDK.GetKey(), JsonValue.CreateStringValue("c-sharp"));
             requestObj.Add(BranchJsonKey.SdkVersion.GetKey(), JsonValue.CreateStringValue(sdkVersion));
 
             if (!string.IsNullOrEmpty(os)) requestObj.Add(BranchJsonKey.OS.GetKey(), JsonValue.CreateStringValue(os));
