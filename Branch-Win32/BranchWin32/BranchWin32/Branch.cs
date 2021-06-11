@@ -92,20 +92,19 @@ namespace BranchSdk {
             return GetBranchInstance(!BranchUtil.IsCustomDebugEnabled, string.Empty);
         }
 
-        public static Branch GetBranchInstance(bool isLive, string branchKey) {
-            if (string.IsNullOrEmpty(branchKey)) {
+        public static Branch GetBranchInstance(bool isLive, string branchKey)
+        {
+            if (string.IsNullOrEmpty(branchKey))
+            {
                 string lastBranchKey = LibraryAdapter.GetPrefHelper().GetBranchKey();
                 LibraryAdapter.GetPrefHelper().SetBranchKey(isLive ? BranchConfigManager.GetLiveBranchKey() : BranchConfigManager.GetTestBranchKey());
 
-                Debug.WriteLine(lastBranchKey);
-
-                if(!lastBranchKey.Equals(LibraryAdapter.GetPrefHelper().GetBranchKey())) {
+                if(!LibraryAdapter.GetPrefHelper().GetBranchKey().Equals(lastBranchKey)) {
                     LibraryAdapter.GetPrefHelper().ClearUserValues();
                 }
             } else {
                 LibraryAdapter.GetPrefHelper().SetBranchKey(branchKey);
             }
-            Debug.WriteLine("Current branch key: " + LibraryAdapter.GetPrefHelper().GetBranchKey());
             instance = new Branch();
             return instance;
         }

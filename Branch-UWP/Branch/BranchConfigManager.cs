@@ -32,19 +32,11 @@ namespace BranchSdk {
         }
 
         public static string GetLiveBranchKey() {
-            if (!cachedFiles.ContainsKey("live_branch_key")) {
-                Debug.WriteLine("Please create \"live_branch_key\" txt file with live branch key inside in \"Configs\" folder in \"Assets\" folder");
-                return string.Empty;
-            }
-            return cachedFiles["live_branch_key"];
+            return "key_live_mnzYrzoSgtqi3gAyzkVzqppkxFnNY1jn";
         }
 
         public static string GetTestBranchKey() {
-            if (!cachedFiles.ContainsKey("test_branch_key")) {
-                Debug.WriteLine("Please create \"test_branch_key\" txt file with test branch key inside in \"Configs\" folder in \"Assets\" folder");
-                return string.Empty;
-            }
-            return cachedFiles["test_branch_key"];
+            return string.Empty;
         }
     }
 }

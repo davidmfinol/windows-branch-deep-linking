@@ -98,13 +98,12 @@ namespace BranchSdk {
                 string lastBranchKey = LibraryAdapter.GetPrefHelper().GetBranchKey();
                 LibraryAdapter.GetPrefHelper().SetBranchKey(isLive ? BranchConfigManager.GetLiveBranchKey() : BranchConfigManager.GetTestBranchKey());
 
-                if(!lastBranchKey.Equals(LibraryAdapter.GetPrefHelper().GetBranchKey())) {
+                if (!LibraryAdapter.GetPrefHelper().GetBranchKey().Equals(lastBranchKey)) {
                     LibraryAdapter.GetPrefHelper().ClearUserValues();
                 }
             } else {
                 LibraryAdapter.GetPrefHelper().SetBranchKey(branchKey);
             }
-            Debug.WriteLine("Current branch key: " + LibraryAdapter.GetPrefHelper().GetBranchKey());
             instance = new Branch();
             return instance;
         }
